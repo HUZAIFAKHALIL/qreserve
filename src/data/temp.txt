@@ -1,0 +1,494 @@
+// {
+//   "serviceTypes": [
+//     "hotel",
+//     "car",
+//     "gym",
+//     "salon",
+//     "hall",
+//     "activity",
+//     "flight",
+//     "playground"
+//   ],
+
+//   "services": [
+//     {
+//       "type": "hotel",
+//       "name": "Luxury Beach Resort",
+//       "description": "A five-star beachfront resort offering exclusive services and private rooms.",
+//       "price": 250.0,
+//       "location": "Malibu Beach, CA",
+//       "rating": 4.8,
+//       "availableStartTime": "2024-12-01T14:00:00Z",
+//       "availableEndTime": "2024-12-15T11:00:00Z",
+//       "roomType": "Suite",
+//       "amenities": "Wi-Fi, Pool, Spa, Private Beach",
+//       "hotelStars": 5,
+//       "reservations": [],
+//       "createdAt": "2024-11-01T12:00:00Z",
+//       "updatedAt": "2024-11-01T12:00:00Z"
+//     },
+//     {
+//       "type": "hotel",
+//       "name": "Budget Inn",
+//       "description": "Affordable accommodation in the city center with basic amenities.",
+//       "price": 75.0,
+//       "location": "Downtown Los Angeles, CA",
+//       "rating": 3.5,
+//       "availableStartTime": "2024-11-15T14:00:00Z",
+//       "availableEndTime": "2024-11-30T11:00:00Z",
+//       "roomType": "Single",
+//       "amenities": "Wi-Fi, Parking, Breakfast",
+//       "hotelStars": 3,
+//       "reservations": [],
+//       "createdAt": "2024-11-05T12:00:00Z",
+//       "updatedAt": "2024-11-05T12:00:00Z"
+//     },
+//     {
+//       "type": "car",
+//       "name": "SUV Adventure",
+//       "description": "An off-road SUV perfect for adventurous trips.",
+//       "price": 100.0,
+//       "location": "Los Angeles, CA",
+//       "rating": 4.7,
+//       "carModel": "Toyota Land Cruiser",
+//       "carType": "SUV",
+//       "carCapacity": 5,
+//       "reservations": [],
+//       "createdAt": "2024-10-25T12:00:00Z",
+//       "updatedAt": "2024-10-25T12:00:00Z"
+//     },
+//     {
+//       "type": "car",
+//       "name": "Luxury Sedan",
+//       "description": "A high-end sedan for a smooth and comfortable ride.",
+//       "price": 150.0,
+//       "location": "Los Angeles, CA",
+//       "rating": 4.9,
+//       "carModel": "Mercedes-Benz S-Class",
+//       "carType": "Sedan",
+//       "carCapacity": 4,
+//       "reservations": [],
+//       "createdAt": "2024-10-30T12:00:00Z",
+//       "updatedAt": "2024-10-30T12:00:00Z"
+//     },
+//     {
+//       "type": "gym",
+//       "name": "FitLife Gym",
+//       "description": "A modern gym with state-of-the-art equipment and personal trainers.",
+//       "price": 40.0,
+//       "location": "Hollywood, CA",
+//       "rating": 4.5,
+//       "gymFacilities": "Cardio, Weights, Yoga Studio, Pool",
+//       "membershipTypes": "Basic, Premium",
+//       "operatingHours": "6AM-10PM",
+//       "reservations": [],
+//       "createdAt": "2024-11-01T12:00:00Z",
+//       "updatedAt": "2024-11-01T12:00:00Z"
+//     },
+//     {
+//       "type": "gym",
+//       "name": "GymX",
+//       "description": "A fitness center for all your workout needs, with multiple membership levels.",
+//       "price": 30.0,
+//       "location": "Downtown LA, CA",
+//       "rating": 4.3,
+//       "gymFacilities": "Cardio, Weights, Pool",
+//       "membershipTypes": "Basic, Premium, VIP",
+//       "operatingHours": "5AM-11PM",
+//       "reservations": [],
+//       "createdAt": "2024-11-02T12:00:00Z",
+//       "updatedAt": "2024-11-02T12:00:00Z"
+//     },
+//     {
+//       "type": "salon",
+//       "name": "Glamour Salon",
+//       "description": "A premium salon offering top-quality beauty services.",
+//       "price": 70.0,
+//       "location": "Beverly Hills, CA",
+//       "rating": 4.8,
+//       "salonSpecialty": "Haircut, Hair Color, Styling",
+//       "reservations": [],
+//       "createdAt": "2024-11-10T12:00:00Z",
+//       "updatedAt": "2024-11-10T12:00:00Z"
+//     },
+//     {
+//       "type": "salon",
+//       "name": "Relaxation Salon",
+//       "description": "A salon specializing in relaxing spa services and massages.",
+//       "price": 100.0,
+//       "location": "Santa Monica, CA",
+//       "rating": 4.6,
+//       "salonSpecialty": "Massage, Facials, Manicure",
+//       "reservations": [],
+//       "createdAt": "2024-11-12T12:00:00Z",
+//       "updatedAt": "2024-11-12T12:00:00Z"
+//     },
+//     {
+//       "type": "hall",
+//       "name": "Grand Conference Hall",
+//       "description": "A spacious conference hall ideal for large events.",
+//       "price": 500.0,
+//       "location": "Downtown Los Angeles, CA",
+//       "rating": 4.9,
+//       "hallCapacity": 300,
+//       "eventType": "Conference, Wedding, Seminar",
+//       "reservations": [],
+//       "createdAt": "2024-10-15T12:00:00Z",
+//       "updatedAt": "2024-10-15T12:00:00Z"
+//     },
+//     {
+//       "type": "hall",
+//       "name": "Wedding Banquet Hall",
+//       "description": "A beautiful venue perfect for weddings and large gatherings.",
+//       "price": 700.0,
+//       "location": "Beverly Hills, CA",
+//       "rating": 4.7,
+//       "hallCapacity": 150,
+//       "eventType": "Wedding, Party",
+//       "reservations": [],
+//       "createdAt": "2024-10-18T12:00:00Z",
+//       "updatedAt": "2024-10-18T12:00:00Z"
+//     },
+//     {
+//       "type": "activity",
+//       "name": "Mountain Hiking",
+//       "description": "Guided mountain hikes for beginners and experts.",
+//       "price": 50.0,
+//       "location": "Rocky Mountains, CO",
+//       "rating": 4.6,
+//       "activityType": "Hiking",
+//       "reservations": [],
+//       "createdAt": "2024-09-25T12:00:00Z",
+//       "updatedAt": "2024-09-25T12:00:00Z"
+//     },
+//     {
+//       "type": "activity",
+//       "name": "Museum Tour",
+//       "description": "A guided tour of historical landmarks and museums.",
+//       "price": 40.0,
+//       "location": "New York City, NY",
+//       "rating": 4.5,
+//       "activityType": "Museum Tour",
+//       "reservations": [],
+//       "createdAt": "2024-09-28T12:00:00Z",
+//       "updatedAt": "2024-09-28T12:00:00Z"
+//     },
+//     {
+//       "type": "flight",
+//       "name": "NYC to LA Flight",
+//       "description": "Direct flight from New York to Los Angeles.",
+//       "price": 350.0,
+//       "location": "New York City, NY to Los Angeles, CA",
+//       "rating": 4.8,
+//       "airlineName": "Delta Airlines",
+//       "flightClass": "Economy",
+//       "seatsAvailable": 100,
+//       "reservations": [],
+//       "createdAt": "2024-11-01T12:00:00Z",
+//       "updatedAt": "2024-11-01T12:00:00Z"
+//     },
+//     {
+//       "type": "flight",
+//       "name": "LA to Miami Flight",
+//       "description": "A comfortable flight from LA to Miami.",
+//       "price": 250.0,
+//       "location": "Los Angeles, CA to Miami, FL",
+//       "rating": 4.7,
+//       "airlineName": "American Airlines",
+//       "flightClass": "Business",
+//       "seatsAvailable": 50,
+//       "reservations": [],
+//       "createdAt": "2024-11-03T12:00:00Z",
+//       "updatedAt": "2024-11-03T12:00:00Z"
+//     },
+//     {
+//       "type": "playground",
+//       "name": "Indoor Fun Zone",
+//       "description": "An indoor playground with a variety of games and activities.",
+//       "price": 20.0,
+//       "location": "Downtown LA, CA",
+//       "rating": 4.3,
+//       "playgroundType": "Indoor",
+//       "ageGroup": "Kids",
+//       "equipment": "Climbing Wall, Ball Pit, Trampoline",
+//       "reservations": [],
+//       "createdAt": "2024-10-20T12:00:00Z",
+//       "updatedAt": "2024-10-20T12:00:00Z"
+//     },
+//     {
+//       "type": "playground",
+//       "name": "Outdoor Adventure Park",
+//       "description": "An outdoor park with adventure courses and nature trails.",
+//       "price": 30.0,
+//       "location": "Santa Monica, CA",
+//       "rating": 4.6,
+//       "playgroundType": "Outdoor",
+//       "ageGroup": "All Ages",
+//       "equipment": "Zip Line, Obstacle Course, Hiking Trails",
+//       "reservations": [],
+//       "createdAt": "2024-10-22T12:00:00Z",
+//       "updatedAt": "2024-10-22T12:00:00Z"
+//     }
+//   ]
+// }
+
+
+
+
+
+{
+  "serviceTypes": [
+    "hotel",
+    "car",
+    "gym",
+    "salon",
+    "hall",
+    "activity",
+    "flight",
+    "playground"
+  ],
+  "services": [
+    {
+      "type": "hotel",
+      "name": "Luxury Beach Resort",
+      "description": "A five-star beachfront resort offering exclusive services and private rooms.",
+      "price": 250.0,
+      "location": "Malibu Beach, CA",
+      "rating": 4.8,
+      "availableStartTime": "2024-12-01T14:00:00Z",
+      "availableEndTime": "2024-12-15T11:00:00Z",
+      "roomType": "Suite",
+      "amenities": "Wi-Fi, Pool, Spa, Private Beach",
+      "hotelStars": 5,
+
+      "createdAt": "2024-11-01T12:00:00Z",
+      "updatedAt": "2024-11-01T12:00:00Z"
+    },
+    {
+      "type": "hotel",
+      "name": "Budget Inn",
+      "description": "Affordable accommodation in the city center with basic amenities.",
+      "price": 75.0,
+      "location": "Downtown Los Angeles, CA",
+      "rating": 3.5,
+      "availableStartTime": "2024-11-15T14:00:00Z",
+      "availableEndTime": "2024-11-30T11:00:00Z",
+      "roomType": "Single",
+      "amenities": "Wi-Fi, Parking, Breakfast",
+      "hotelStars": 3,
+
+      "createdAt": "2024-11-05T12:00:00Z",
+      "updatedAt": "2024-11-05T12:00:00Z"
+    },
+    {
+      "type": "car",
+      "name": "SUV Adventure",
+      "description": "An off-road SUV perfect for adventurous trips.",
+      "price": 100.0,
+      "location": "Los Angeles, CA",
+      "rating": 4.7,
+      "availableStartTime": "2024-11-20T08:00:00Z",
+      "availableEndTime": "2024-11-27T20:00:00Z",
+      "carModel": "Toyota Land Cruiser",
+      "carType": "SUV",
+      "carCapacity": 5,
+
+      "createdAt": "2024-10-25T12:00:00Z",
+      "updatedAt": "2024-10-25T12:00:00Z"
+    },
+    {
+      "type": "car",
+      "name": "Luxury Sedan",
+      "description": "A high-end sedan for a smooth and comfortable ride.",
+      "price": 150.0,
+      "location": "Los Angeles, CA",
+      "rating": 4.9,
+      "availableStartTime": "2024-11-25T08:00:00Z",
+      "availableEndTime": "2024-12-05T20:00:00Z",
+      "carModel": "Mercedes-Benz S-Class",
+      "carType": "Sedan",
+      "carCapacity": 4,
+
+      "createdAt": "2024-10-30T12:00:00Z",
+      "updatedAt": "2024-10-30T12:00:00Z"
+    },
+    {
+      "type": "gym",
+      "name": "FitLife Gym",
+      "description": "A modern gym with state-of-the-art equipment and personal trainers.",
+      "price": 40.0,
+      "location": "Hollywood, CA",
+      "rating": 4.5,
+      "availableStartTime": "2024-11-01T06:00:00Z",
+      "availableEndTime": "2024-11-30T22:00:00Z",
+      "gymFacilities": "Cardio, Weights, Yoga Studio, Pool",
+      "membershipTypes": "Basic, Premium",
+      "operatingHours": "6AM-10PM",
+
+      "createdAt": "2024-11-01T12:00:00Z",
+      "updatedAt": "2024-11-01T12:00:00Z"
+    },
+    {
+      "type": "gym",
+      "name": "GymX",
+      "description": "A fitness center for all your workout needs, with multiple membership levels.",
+      "price": 30.0,
+      "location": "Downtown LA, CA",
+      "rating": 4.3,
+      "availableStartTime": "2024-11-02T05:00:00Z",
+      "availableEndTime": "2024-11-29T23:00:00Z",
+      "gymFacilities": "Cardio, Weights, Pool",
+      "membershipTypes": "Basic, Premium, VIP",
+      "operatingHours": "5AM-11PM",
+
+      "createdAt": "2024-11-02T12:00:00Z",
+      "updatedAt": "2024-11-02T12:00:00Z"
+    },
+    {
+      "type": "salon",
+      "name": "Glamour Salon",
+      "description": "A premium salon offering top-quality beauty services.",
+      "price": 70.0,
+      "location": "Beverly Hills, CA",
+      "rating": 4.8,
+      "availableStartTime": "2024-11-10T09:00:00Z",
+      "availableEndTime": "2024-11-20T19:00:00Z",
+      "salonSpecialty": "Haircut, Hair Color, Styling",
+
+      "createdAt": "2024-11-10T12:00:00Z",
+      "updatedAt": "2024-11-10T12:00:00Z"
+    },
+    {
+      "type": "salon",
+      "name": "Relaxation Salon",
+      "description": "A salon specializing in relaxing spa services and massages.",
+      "price": 100.0,
+      "location": "Santa Monica, CA",
+      "rating": 4.6,
+      "availableStartTime": "2024-11-12T10:00:00Z",
+      "availableEndTime": "2024-11-22T20:00:00Z",
+      "salonSpecialty": "Massage, Facials, Manicure",
+
+      "createdAt": "2024-11-12T12:00:00Z",
+      "updatedAt": "2024-11-12T12:00:00Z"
+    },
+    {
+      "type": "hall",
+      "name": "Grand Conference Hall",
+      "description": "A large conference hall suitable for corporate events and seminars.",
+      "price": 500.0,
+      "location": "San Francisco, CA",
+      "rating": 4.9,
+      "availableStartTime": "2024-11-20T08:00:00Z",
+      "availableEndTime": "2024-11-30T18:00:00Z",
+      "hallCapacity": 500,
+      "amenities": "Projector, Wi-Fi, Sound System",
+
+      "createdAt": "2024-11-01T12:00:00Z",
+      "updatedAt": "2024-11-01T12:00:00Z"
+    },
+    {
+      "type": "hall",
+      "name": "Celebration Banquet Hall",
+      "description": "An elegant banquet hall for weddings and parties.",
+      "price": 700.0,
+      "location": "Pasadena, CA",
+      "rating": 4.7,
+      "availableStartTime": "2024-12-05T10:00:00Z",
+      "availableEndTime": "2024-12-15T22:00:00Z",
+      "hallCapacity": 300,
+      "amenities": "Catering, Decoration, Valet Parking",
+
+      "createdAt": "2024-11-02T12:00:00Z",
+      "updatedAt": "2024-11-02T12:00:00Z"
+    },
+    {
+      "type": "activity",
+      "name": "Kayaking Adventure",
+      "description": "A thrilling kayaking experience on the Colorado River.",
+      "price": 120.0,
+      "location": "Colorado River, CO",
+      "rating": 4.8,
+      "availableStartTime": "2024-11-10T07:00:00Z",
+      "availableEndTime": "2024-11-25T17:00:00Z",
+      "activityType": "Outdoor",
+
+      "createdAt": "2024-11-01T12:00:00Z",
+      "updatedAt": "2024-11-01T12:00:00Z"
+    },
+    {
+      "type": "activity",
+      "name": "Wine Tasting Tour",
+      "description": "A luxurious wine tasting experience in Napa Valley.",
+      "price": 200.0,
+      "location": "Napa Valley, CA",
+      "rating": 4.9,
+      "availableStartTime": "2024-12-01T11:00:00Z",
+      "availableEndTime": "2024-12-10T19:00:00Z",
+      "activityType": "Indoor",
+
+      "createdAt": "2024-11-02T12:00:00Z",
+      "updatedAt": "2024-11-02T12:00:00Z"
+    },
+    {
+      "type": "flight",
+      "name": "NY to LA Direct Flight",
+      "description": "A non-stop flight from New York to Los Angeles.",
+      "price": 350.0,
+      "location": "JFK to LAX",
+      "rating": 4.5,
+      "availableStartTime": "2024-11-25T15:00:00Z",
+      "availableEndTime": "2024-12-05T23:00:00Z",
+      "airline": "American Airlines",
+      "classType": "Economy",
+
+      "createdAt": "2024-11-03T12:00:00Z",
+      "updatedAt": "2024-11-03T12:00:00Z"
+    },
+    {
+      "type": "flight",
+      "name": "LA to Tokyo Flight",
+      "description": "A comfortable international flight from Los Angeles to Tokyo.",
+      "price": 900.0,
+      "location": "LAX to Narita",
+      "rating": 4.8,
+      "availableStartTime": "2024-12-10T12:00:00Z",
+      "availableEndTime": "2024-12-20T18:00:00Z",
+      "airline": "Japan Airlines",
+      "classType": "Business",
+
+      "createdAt": "2024-11-04T12:00:00Z",
+      "updatedAt": "2024-11-04T12:00:00Z"
+    },
+    {
+      "type": "playground",
+      "name": "City Park Playground",
+      "description": "A spacious playground with slides, swings, and more.",
+      "price": 20.0,
+      "location": "San Diego, CA",
+      "rating": 4.6,
+      "availableStartTime": "2024-11-15T08:00:00Z",
+      "availableEndTime": "2024-11-30T18:00:00Z",
+      "playgroundType": "Outdoor",
+      "facilities": "Slides, Swings, Restrooms",
+
+      "createdAt": "2024-11-01T12:00:00Z",
+      "updatedAt": "2024-11-01T12:00:00Z"
+    },
+    {
+      "type": "playground",
+      "name": "Indoor Kids Arena",
+      "description": "An indoor play area for kids with supervised activities.",
+      "price": 50.0,
+      "location": "Phoenix, AZ",
+      "rating": 4.7,
+      "availableStartTime": "2024-12-01T09:00:00Z",
+      "availableEndTime": "2024-12-15T20:00:00Z",
+      "playgroundType": "Indoor",
+      "facilities": "Ball Pit, Climbing Wall, Cafeteria",
+
+      "createdAt": "2024-11-02T12:00:00Z",
+      "updatedAt": "2024-11-02T12:00:00Z"
+    }
+  ]
+}

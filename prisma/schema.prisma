@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  phone        String    @unique
+  dob          DateTime
+  gender       String
+  password     String
+  reservations Reservation[] // Relationship to reservations
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt @default(now())
+  token        String?   // Field for password reset or verification tokens
+  tokenExpiry  DateTime? // Expiry for the token
+}
+
+model Service {
+  id               Int              @id @default(autoincrement())
+  type             String           // Type of service (e.g., "hotel", "car", "gym", etc.)
+  name             String           // Name or title of the service
+  description      String?          // General description of the service
+  price            Float           // Base price or hourly rate
+  location         String?          // Address or general location of the service
+  rating           Float?           // Overall rating
+  
+  // Time-related fields for each service type
+  availableStartTime  DateTime?      // Start time for when a service is available (e.g., check-in for hotels, flight departure)
+  availableEndTime    DateTime?      // End time for when a service is available (e.g., check-out for hotels, flight arrival)
+
+  // Service-specific fields (e.g., for Hotels, Cars, etc.)
+  roomType         String?          // Hotel room type like "Single", "Suite"
+  amenities        String?          // Comma-separated amenities for hotels or other services
+  hotelStars       Int?             // Hotel star rating
+
+  // Cars
+  carModel         String?
+  carType          String?          // e.g., "SUV", "Sedan"
+  carCapacity      Int?             // Passenger capacity
+
+   // Gyms
+  gymFacilities    String?          // e.g., "Cardio, Weights, Pool"
+  membershipTypes  String?          // Membership levels like "Basic, Premium"
+  operatingHours   String?          // e.g., "6AM-10PM"
+
+  // Salons
+  salonSpecialty   String?          // Service specialty e.g., "Haircut", "Manicure"
+
+
+  // Halls
+  hallCapacity     Int?             // Seating capacity
+  eventType        String?          // Event types like "Conference", "Wedding"
+
+   // Activities
+  activityType     String?          // Activity types like "Hiking", "Museum Tour"
+
+  // Flights
+  airlineName      String?
+  flightClass      String?          // e.g., "Economy", "Business"
+  seatsAvailable   Int?
+  
+
+  // Playgrounds
+  playgroundType   String?          // e.g., "Indoor", "Outdoor"
+  ageGroup         String?          // Suitable age group e.g., "Kids", "Adults"
+  equipment        String?          // Available equipment
+  
+  reservations     ReservationItem[] // Relationship to reservation items
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+
+model Reservation {
+  id                Int              @id @default(autoincrement())
+  userId            Int              // Foreign key to User
+  status            String           // Status of reservation (e.g., "pending", "confirmed", "completed", "cancelled")
+  totalPrice        Float            // Total price for the reservation
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id])
+  reservationItems  ReservationItem[] // Relationship to reservation items
+}
+
+model ReservationItem {
+  id                Int              @id @default(autoincrement())
+  reservationId     Int              // Foreign key to Reservation
+  serviceId         Int              // Foreign key to Service
+  // quantity          Int              // Number of units (e.g., hotel rooms, rental days)
+  price             Float            // Price of the service at booking time
+  startTime         DateTime         // Reservation start time (e.g., check-in for hotel, flight departure, etc.)
+  endTime           DateTime         // Reservation end time (e.g., check-out for hotel, flight arrival, etc.)
+  modifiedAt        DateTime?        // Timestamp for when the reservation item was last modified
+  editable          Boolean          @default(true) // Flag to allow or disallow editing of reservation item
+
+  reservation       Reservation       @relation(fields: [reservationId], references: [id])
+  service           Service           @relation(fields: [serviceId], references: [id])
+  
+  // Enforce the reservation time to be within the service's available time range
+  // @@check(
+  //   startTime >= service.availableStartTime &&
+  //   endTime <= service.availableEndTime,
+  //   name: "ReservationTimeCheck"
+  // )
+}

@@ -7,9 +7,14 @@ module.exports = {
   ],
   theme: {
     extend: {
+      // colors: {
+      //   background: "var(--background)",
+      //   foreground: "var(--foreground)",
+      // },
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        primary: "#f7f7f7",
+        secondary: "#f7f7f7",
+        // dark: "#333",
       },
     },
   },
