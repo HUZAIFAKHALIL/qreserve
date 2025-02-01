@@ -10,6 +10,7 @@ export default function ReserveService({ params }) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState("");
+  const [noOfRooms, setNoOfRooms] = useState(1);
   const userId = localStorage.getItem("userId");
   const userEmail = localStorage.getItem("userEmail");
   const router = useRouter();
@@ -49,6 +50,11 @@ export default function ReserveService({ params }) {
     setEndDate(e.target.value);
   };
 
+  const handleRoomsChange = (e) => {
+    const value = Math.max(1, e.target.value); // Ensure value is at least 1
+    setNoOfRooms(value);
+  };
+
   const validateForm = () => {
     if (!startDate || !endDate) {
       setError("Both dates are required.");
@@ -79,6 +85,11 @@ export default function ReserveService({ params }) {
       price: service.price,
     };
 
+    if (service.type === "hotel") {
+      reservation.noOfRooms = noOfRooms;
+      reservation.price *= noOfRooms;
+    }
+
     // Retrieve existing reservations from localStorage
     const existingReservations =
       JSON.parse(localStorage.getItem(userEmail)) || [];
@@ -91,6 +102,7 @@ export default function ReserveService({ params }) {
 
     setStartDate("");
     setEndDate("");
+    setNoOfRooms(1);
     alert("Reservation saved successfully!");
     router.push("/pending-reservations");
   };
@@ -156,6 +168,21 @@ export default function ReserveService({ params }) {
                   className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
                 />
               </div>
+
+              {service.type === "hotel" && (
+                <div className="mt-4">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Select No of Rooms
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={noOfRooms}
+                    onChange={handleRoomsChange}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              )}
 
               {/* Display error message above the button */}
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}

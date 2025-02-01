@@ -68,7 +68,7 @@ export default function Login() {
     const response = await fetch("/api/auth/request-reset", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: identifier }),
+      body: JSON.stringify({ identifier }),
     });
 
     if (!response.ok) {

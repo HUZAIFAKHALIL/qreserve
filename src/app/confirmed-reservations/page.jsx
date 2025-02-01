@@ -84,6 +84,11 @@ export default function ConfirmedReservations() {
     }
   };
 
+  const handlePublicReservation = async (e,itemId) => {
+    setEditItem(item);
+    handleConfirmEdit(e,true)
+  };
+
   // Handle edit button click
   const handleEditClick = (item) => {
     setEditItem(item);
@@ -92,17 +97,24 @@ export default function ConfirmedReservations() {
   };
 
   // Handle confirm edit
-  const handleConfirmEdit = async (e) => {
+  const handleConfirmEdit = async (e,isPublic=false) => {
     e.preventDefault();
     setIsLoading(true);
+    let req = {
+      startTime: new Date(startDate),
+      endTime: new Date(endDate),
+    }
+    if(isPublic){
+      req = {
+        ...req,
+        isPublic : true
+      }
+    }
     try {
       const response = await fetch(`/api/reservation-items/${editItem.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          startTime: new Date(startDate),
-          endTime: new Date(endDate),
-        }),
+        body: JSON.stringify(req),
       });
 
       if (response.ok) {
@@ -186,6 +198,7 @@ export default function ConfirmedReservations() {
                   <p className="text-sm">
                     End Time: {new Date(item.endTime).toLocaleString()}
                   </p>
+                
                   {!editItem || editItem.id !== item.id ? (
                     <div className="flex gap-4 mt-2">
                       <button
@@ -200,6 +213,7 @@ export default function ConfirmedReservations() {
                       >
                         Delete
                       </button>
+                      
                     </div>
                   ) : (
                     <form onSubmit={handleConfirmEdit} className="mt-4">
@@ -231,6 +245,7 @@ export default function ConfirmedReservations() {
                       >
                         Confirm
                       </button>
+
                     </form>
                   )}
                 </div>

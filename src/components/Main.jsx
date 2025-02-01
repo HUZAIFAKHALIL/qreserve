@@ -1,10 +1,41 @@
 import Image from "next/image"; // Use Next.js Image for optimized loading
 import Link from "next/link"; // Import Link from Next.js
 import { useAuth } from "@/PrivateRoute/auth";
+import { useState, useEffect } from "react";
 
 const MainPage = () => {
   const prefixURL = "/service"; // Prefix for all service links
   const isLoggedIn = useAuth();
+  const [reservations, setReservations] = useState([]); // State to store reservations
+  const [loading, setLoading] = useState(true); // State to show loading state
+  const [error, setError] = useState(null); // State to handle errors
+
+  useEffect(() => {
+    // Fetch reservations only if logged in
+    if (isLoggedIn) {
+      const fetchReservations = async () => {
+        try {
+          const response = await fetch("/api/reservations/reservationItems?ispublic=1", {
+            method: "GET",
+          });
+          if (!response.ok) {
+            throw new Error("Failed to fetch reservations");
+          }
+          const data = await response.json();
+          console.log("Data",data)
+          setReservations(data.reservations);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchReservations();
+    } else {
+      setLoading(false); // Stop loading if not logged in
+    }
+  }, [isLoggedIn]);
 
   return (
     <div className="bg-white min-h-screen">
@@ -14,6 +45,15 @@ const MainPage = () => {
         </h1>
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {reservations && reservations.map((reservation) => (
+              <ServiceCard
+                key={reservation.id}
+                title={reservation.title || "Unknown Service"}
+                imageSrc={reservation.image || "/images/default.jpg"}
+                description={reservation.description || "No description available"}
+                link={`${prefixURL}?serviceType=${reservation.type}`}
+              />
+            ))}
           {/* Service Cards */}
           <ServiceCard
             title="Book a Hotel"
@@ -52,10 +92,10 @@ const MainPage = () => {
             link={`${prefixURL}?serviceType=book-activity`}
           />
           <ServiceCard
-            title="Flights"
-            imageSrc="/images/flight.jpg"
-            description="Book a flight for your next adventure."
-            link={`${prefixURL}?serviceType=book-flight`}
+            title="Restaurants"
+            imageSrc="/images/restaurant.jpg"
+            description="Explore the best dining options around you."
+            link={`${prefixURL}?serviceType=book-restaurant`}
           />
           <ServiceCard
             title="Playgrounds"

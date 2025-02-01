@@ -5,18 +5,31 @@ import nodemailer from "nodemailer";
 const prisma = new PrismaClient();
 
 export async function POST(req) {
-  const { email } = await req.json();
+  const { identifier } = await req.json();
+
+  // Find user by email or phone
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [{ email: identifier }, { phone: identifier }],
+    },
+  });
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: "User not found" }), {
+      status: 401,
+    });
+  }
 
   // Check if the user exists
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return new Response(
-      JSON.stringify({
-        message: "If the email exists, a reset link will be sent.",
-      }),
-      { status: 200 }
-    );
-  }
+  // const user = await prisma.user.findUnique({ where: { email } });
+  // if (!user) {
+  //   return new Response(
+  //     JSON.stringify({
+  //       message: "If the email exists, a reset link will be sent.",
+  //     }),
+  //     { status: 200 }
+  //   );
+  // }
 
   // Generate token and expiry
   const token = crypto.randomBytes(32).toString("hex");
@@ -24,7 +37,7 @@ export async function POST(req) {
 
   // Save token and expiry in the database
   await prisma.user.update({
-    where: { email },
+    where: { email: user.email },
     data: { token, tokenExpiry },
   });
 
@@ -40,7 +53,7 @@ export async function POST(req) {
 
   const mailOptions = {
     from: "no-reply@qreserve.com",
-    to: email,
+    to: user.email,
     subject: "Password Reset",
     text: `Click the link to reset your password: ${resetUrl}. This link will expire in 60 minutes.`,
   };

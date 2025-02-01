@@ -16,23 +16,29 @@ export default function Footer() {
             </h2>
             <ul className="mt-4 space-y-2 font-normal">
               <li>
-                <Link href="#" className="hover:underline">
+                <Link href="/companyinfo/about" className="hover:underline">
                   About qReserve
                 </Link>
               </li>
 
               <li>
-                <Link href="#" className="hover:underline">
+                <Link
+                  href="/companyinfo/fashionblogger"
+                  className="hover:underline"
+                >
                   Fashion Blogger
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:underline">
+                <Link
+                  href="/companyinfo/socialresponsibility"
+                  className="hover:underline"
+                >
                   Social Responsibility
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:underline">
+                <Link href="/companyinfo/careers" className="hover:underline">
                   Careers
                 </Link>
               </li>
@@ -46,12 +52,12 @@ export default function Footer() {
             </h2>
             <ul className="mt-4 space-y-2 font-normal">
               <li>
-                <Link href="#" className="hover:underline">
+                <Link href="/help/privacy" className="hover:underline">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:underline">
+                <Link href="/help/termsconditions" className="hover:underline">
                   Terms & Conditions
                 </Link>
               </li>

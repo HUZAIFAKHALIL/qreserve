@@ -36,7 +36,7 @@ const Header = () => {
 
   return (
     <header className="bg-white p-4 shadow-2xl border-b">
-      <div className="flex items-center justify-between container mx-auto">
+      <div className="flex items-center justify-between">
         {/* Logo */}
         <Link className="flex items-center space-x-2" href="/">
           <Image
@@ -77,6 +77,12 @@ const Header = () => {
               </div>
               {menuOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white shadow-lg rounded-md border">
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-black hover:bg-gray-100"
+                  >
+                    Profile
+                  </Link>
                   <Link
                     href="/pending-reservations"
                     className="block px-4 py-2 text-black hover:bg-gray-100"

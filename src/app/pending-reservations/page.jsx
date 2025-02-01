@@ -9,14 +9,26 @@ export default function PendingReservations() {
   const [editingReservation, setEditingReservation] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isPublic, setisPublic] = useState(false);
   const [error, setError] = useState("");
   const [confirmationStatus, setConfirmationStatus] = useState("");
+  const [noOfRooms, setNoOfRooms] = useState(1);
 
   const isBrowser = typeof window !== "undefined";
   const userEmail = isBrowser ? localStorage.getItem("userEmail") : null;
   const router = useRouter();
+
   useEffect(() => {
-    if (userEmail) {
+    const isBrowser = typeof window !== "undefined";
+
+    if (isBrowser) {
+      const userEmail = localStorage.getItem("userEmail");
+
+      if (!userEmail) {
+        router.push("/login");
+        return;
+      }
+
       setLoading(true);
 
       const allReservations = localStorage.getItem(userEmail);
@@ -31,7 +43,6 @@ export default function PendingReservations() {
         const parsedReservations = JSON.parse(allReservations);
 
         const fetchServiceDetails = async () => {
-          setLoading(true);
           const enrichedReservations = await Promise.all(
             parsedReservations.map(async (reservation) => {
               try {
@@ -42,12 +53,10 @@ export default function PendingReservations() {
                   throw new Error("Failed to fetch service details");
 
                 const serviceDetails = await response.json();
-                return { ...reservation, ...serviceDetails };
+                return { ...serviceDetails, ...reservation };
               } catch (error) {
                 console.error("Error fetching service details:", error);
                 return reservation;
-              } finally {
-                setLoading(false);
               }
             })
           );
@@ -63,21 +72,27 @@ export default function PendingReservations() {
 
       setLoading(false);
     }
-  }, [userEmail]);
+  }, [router]);
 
-  if (!userEmail) {
-    return router.push("/login");
-  }
+  // if (!userEmail) {
+  //   return router.push("/login");
+  // }
+
 
   const handleEdit = (reservation) => {
     setEditingReservation(reservation);
     setStartDate(reservation.startDate);
     setEndDate(reservation.endDate);
+    if (reservation.type === "hotel") setNoOfRooms(reservation.noOfRooms);
     setError("");
   };
 
   const handleStartDateChange = (event) => setStartDate(event.target.value);
   const handleEndDateChange = (event) => setEndDate(event.target.value);
+  const handleRoomsChange = (e) => {
+    const value = Math.max(1, e.target.value); // Ensure value is at least 1
+    setNoOfRooms(value);
+  };
 
   const handleConfirmEditReservation = (event) => {
     event.preventDefault();
@@ -87,15 +102,30 @@ export default function PendingReservations() {
       return;
     }
 
-    const updatedReservations = reservations.map((reservation) =>
-      reservation.serviceId === editingReservation.serviceId
-        ? { ...reservation, startDate, endDate }
-        : reservation
-    );
+    let oldNoOfRooms = 1;
+    if (reservations.type === "hotel") {
+      oldNoOfRooms = reservations.noOfRooms;
+    }
+
+    const updatedReservations = reservations.map((reservation) => {
+      if (reservation.serviceId === editingReservation.serviceId) {
+        if (reservation.type === "hotel") {
+          const pricePerService = reservation.price / reservation.noOfRooms;
+
+          return {
+            ...reservation,
+            startDate,
+            endDate,
+            noOfRooms,
+            price: pricePerService * noOfRooms,
+          };
+        } else return { ...reservation, startDate, endDate };
+      } else return reservation;
+    });
 
     const filteredUpdatedReservations = updatedReservations.map(
       (reservation) => {
-        return {
+        const baseReservation = {
           userId: reservation.userId,
           userEmail: reservation.userEmail,
           serviceId: reservation.serviceId,
@@ -104,6 +134,12 @@ export default function PendingReservations() {
           endDate: reservation.endDate,
           price: reservation.price,
         };
+
+        if (reservation.type === "hotel") {
+          baseReservation.noOfRooms = reservation.noOfRooms;
+        }
+
+        return baseReservation;
       }
     );
 
@@ -128,7 +164,7 @@ export default function PendingReservations() {
 
       const filteredUpdatedReservations = updatedReservations.map(
         (reservation) => {
-          return {
+          const baseReservation = {
             userId: reservation.userId,
             userEmail: reservation.userEmail,
             serviceId: reservation.serviceId,
@@ -137,6 +173,12 @@ export default function PendingReservations() {
             endDate: reservation.endDate,
             price: reservation.price,
           };
+
+          if (reservation.type === "hotel") {
+            baseReservation.noOfRooms = reservation.noOfRooms;
+          }
+
+          return baseReservation;
         }
       );
 
@@ -224,6 +266,11 @@ export default function PendingReservations() {
               <p className="text-gray-600 mb-4">
                 End Date: {new Date(reservation.endDate).toLocaleDateString()}
               </p>
+              {reservation.type === "hotel" && (
+                <p className="text-gray-600 mb-4">
+                  No of Rooms: {reservation.noOfRooms}
+                </p>
+              )}
               <p className="text-gray-600 mb-4">Price: ${reservation.price}</p>
               <p className="text-gray-600 mb-4">
                 Description: {reservation.description || "N/A"}
@@ -258,8 +305,29 @@ export default function PendingReservations() {
                   />
                 </div>
 
+                {reservation.type === "hotel" && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      No of rooms:
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={noOfRooms}
+                      onChange={handleRoomsChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                )}
+
                 {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
+                <button
+                className="px-4 py-2 bg-black text-white rounded-lg"
+                onClick={(e) => setReservations}
+                >
+                        Request for Partner
+                      </button>
                 <button
                   type="submit"
                   className="mt-4 w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none"

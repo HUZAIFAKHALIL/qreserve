@@ -12,7 +12,8 @@ const serviceTypeToService = {
   "book-gym": "gym",
   "book-hall": "hall",
   "book-activity": "activity",
-  "book-flight": "flight",
+  // "book-flight": "flight",
+  "book-restaurant": "restaurant",
   "book-playground": "playground",
 };
 
@@ -183,25 +184,25 @@ export default function ServiceProducts() {
             <p className="text-sm text-gray-400">Rating: {service.rating}</p>
           </>
         );
-      case "flight":
+      case "restaurant":
         return (
           <>
             {/* <p className="text-sm text-gray-400">
               Flight Time: {service.flightTime}
             </p> */}
             <p className="text-sm text-gray-400">
-              Airline name: {service.airlineName}
+              Restaurant name: {service.name}
             </p>
 
             <p className="text-sm text-gray-400">
               Location: {service.location}
             </p>
-            <p className="text-sm text-gray-400">
+            {/* <p className="text-sm text-gray-400">
               Class: {service.flightClass}
-            </p>
-            <p className="text-sm text-gray-400">
+            </p> */}
+            {/* <p className="text-sm text-gray-400">
               Seats Available: {service.seatsAvailable}
-            </p>
+            </p> */}
             <p className="text-sm text-gray-400">Rating: {service.rating}</p>
           </>
         );

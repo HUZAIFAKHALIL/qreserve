@@ -87,7 +87,17 @@ const SearchAndFilter = () => {
         >
           {/* Category Selection */}
           <div className="mb-4 flex space-x-4">
-            {["all", "travel", "events", "services"].map((cat) => (
+            {[
+              "all",
+              "restaurant",
+              // "flight",
+              "hall",
+              "activity",
+              "salon",
+              "hotel",
+              "gym",
+              "playground",
+            ].map((cat) => (
               <button
                 key={cat}
                 className={`px-4 py-2 rounded-lg ${
@@ -103,7 +113,7 @@ const SearchAndFilter = () => {
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Location Filter */}
-            <div>
+            {/* <div>
               <label className="block mb-1">Location</label>
               <input
                 type="text"
@@ -113,7 +123,7 @@ const SearchAndFilter = () => {
                 value={filters.location}
                 onChange={handleFilterChange}
               />
-            </div>
+            </div> */}
 
             {/* Date Range Filter */}
             {/* <div className="md:col-span-2">

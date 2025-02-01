@@ -13,13 +13,26 @@ const serviceTypeToService = {
   activity: "activity",
   flight: "flight",
   playground: "playground",
+  restaurant: "restaurant",
 };
 
-const categories = {
-  travel: ["car", "flight"],
-  events: ["hall"],
-  services: ["activity", "salon", "hotel", "gym", "playground"],
-};
+// const categories = {
+//   travel: ["car", "flight"],
+//   events: ["hall"],
+//   services: ["activity", "salon", "hotel", "gym", "playground"],
+// };
+
+const categories = [
+  "car",
+  "flight",
+  "hall",
+  "activity",
+  "salon",
+  "hotel",
+  "gym",
+  "playground",
+  "restaurant",
+];
 
 export default function SearchService() {
   const searchParams = useSearchParams();
@@ -44,28 +57,31 @@ export default function SearchService() {
         const data = res.data;
 
         console.log("data before filter is: ", data);
-        const filteredData = data.filter((product) => {
-          if (category === "all") return true;
-          else {
-            if (category === "travel") {
-              if (product.type === "car" || product.type === "flight")
-                return true;
-            } else if (categories === "events") {
-              if (product.type === "hall") return true;
-            } else if (category === "services") {
-              console.log("in category service");
-              if (
-                product.type === "activity" ||
-                product.type === "salon" ||
-                product.type === "hotel" ||
-                product.type === "gym" ||
-                product.type === "playground"
-              )
-                return true;
-            }
-          }
-        });
+        // const filteredData = data.filter((product) => {
+        //   if (category === "all") return true;
+        //   else {
+        //     if (category === "travel") {
+        //       if (product.type === "car" || product.type === "flight")
+        //         return true;
+        //     } else if (categories === "events") {
+        //       if (product.type === "hall") return true;
+        //     } else if (category === "services") {
+        //       console.log("in category service");
+        //       if (
+        //         product.type === "activity" ||
+        //         product.type === "salon" ||
+        //         product.type === "hotel" ||
+        //         product.type === "gym" ||
+        //         product.type === "playground"
+        //       )
+        //         return true;
+        //     }
+        //   }
+        // });
 
+        const filteredData = data.filter(
+          (product) => product.type === category
+        );
         console.log("data after filter is: ", filteredData);
 
         setResults(filteredData);
@@ -161,18 +177,18 @@ export default function SearchService() {
             </p>
           </>
         );
-      case "flight":
+      case "restaurant":
         return (
           <>
             <p className="text-sm text-gray-400">
-              Airline Name: {service.airlineName}
+              Location: {service.location}
             </p>
-            <p className="text-sm text-gray-400">
+            {/* <p className="text-sm text-gray-400">
               Class: {service.flightClass}
-            </p>
-            <p className="text-sm text-gray-400">
+            </p> */}
+            {/* <p className="text-sm text-gray-400">
               Seats Available: {service.seatsAvailable}
-            </p>
+            </p> */}
           </>
         );
       case "playground":
@@ -217,6 +233,7 @@ export default function SearchService() {
                     className="w-full h-48 object-cover"
                     onError={(e) => (e.target.src = "/fallback-image.jpg")}
                   />
+
                   <div className="p-4">
                     <h3 className="text-xl font-semibold mb-2">
                       {service.name}

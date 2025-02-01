@@ -5,10 +5,18 @@ import nodemailer from "nodemailer";
 const prisma = new PrismaClient();
 
 // GET all reservations
-export async function GET() {
+export async function GET(request) {
+
   try {
+    const { searchParams } = new URL(request.url);
+    const ispublic = searchParams.get('ispublic');
+    const whereClause = {};
+    if (ispublic) {
+      whereClause.isPublic = true
+    }
     // Fetch all reservations from the database
     const reservations = await prisma.reservation.findMany({
+      where : whereClause,
       include: {
         reservationItems: true, // Optionally include reservation items
         user: true, // Optionally include user information
