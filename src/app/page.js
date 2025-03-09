@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 export default function Home() {
   const [user, setUser] = useState(null);
   return (
+    
     <div>
       <MainPage />
       {/* <Footer /> */}

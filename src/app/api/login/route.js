@@ -53,6 +53,7 @@ export async function POST(req) {
         token,
         userEmail: user.email,
         userId: user.id,
+        userRole:user.role || 'BUYER'
       }),
       { status: 200 }
     );

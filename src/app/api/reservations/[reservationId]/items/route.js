@@ -12,6 +12,9 @@ export async function GET(req, { params }) {
       where: {
         reservationId: parseInt(reservationId),
       },
+      include : {
+        PartnerRequest : true
+      }
     });
 
     return NextResponse.json(reservationItems, { status: 200 });

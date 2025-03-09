@@ -1,3 +1,5 @@
+//auth.js
+
 import { useEffect, useState } from "react";
 import jwt_decode from "jwt-decode"; // Correct import
 

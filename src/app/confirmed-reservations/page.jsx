@@ -2,6 +2,7 @@
 import { useAuth } from "@/PrivateRoute/auth";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 export default function ConfirmedReservations() {
   const [reservations, setReservations] = useState([]);
@@ -10,6 +11,9 @@ export default function ConfirmedReservations() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPartnerPreference, setShowPartnerPreference] = useState(false);
+  const [partnerItem, setPartnerItem] = useState(null);
+  const [genderPreference, setGenderPreference] = useState(""); // "" for no preference
 
   const isBrowser = typeof window !== "undefined";
   const userId = isBrowser ? localStorage.getItem("userId") : null;
@@ -84,9 +88,80 @@ export default function ConfirmedReservations() {
     }
   };
 
-  const handlePublicReservation = async (e,itemId) => {
-    setEditItem(item);
-    handleConfirmEdit(e,true)
+  // Handle initiating partner request
+  const handlePublicReservation = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPartnerItem(item);
+    setGenderPreference(""); // Reset preference
+    setShowPartnerPreference(true);
+  };
+
+  // Handle submitting partner request with preference
+  const handleSubmitPartnerRequest = async () => {
+    setIsLoading(true);
+    // Prepare the filter object based on gender preference
+    const filter = {};
+    if (genderPreference) {
+      filter.gender = genderPreference;
+    }
+    
+    const req = {
+      reservationItemID: partnerItem.id,
+      requestUser: parseInt(userId),
+      status: "pending",
+      filter: filter,
+    };
+    console.log("req",req)
+    
+    try {
+      const response = await fetch(`/api/partnerRequests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req),
+      });
+
+      if (response.ok) {
+        const updatedItem = await response.json();
+        // Update the items in the selected reservation
+        const updatedItems = selectedReservation.items.map((item) =>
+          item.id === partnerItem.id ? {...item,PartnerRequest:[updatedItem]} : item
+        );
+        setSelectedReservation((prev) => ({ ...prev, items: updatedItems }));
+        
+        // Show success message
+        toast.success(`Request for Partner has been added for this reservation${genderPreference ? ` with ${genderPreference} preference` : ''}`, {
+          position: "bottom-right",
+          autoClose: 5000,
+          theme: "dark",
+        });
+        
+        // Close the preference modal
+        setShowPartnerPreference(false);
+      } else {
+        console.error("Failed to edit reservation item");
+        toast.error("Failed to submit partner request", {
+          position: "bottom-right",
+          autoClose: 5000,
+          theme: "dark",
+        });
+      }
+    } catch (error) {
+      console.error("Error editing reservation item:", error);
+      toast.error("Error submitting partner request", {
+        position: "bottom-right",
+        autoClose: 5000,
+        theme: "dark",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle canceling partner request
+  const handleCancelPartnerRequest = () => {
+    setShowPartnerPreference(false);
+    setPartnerItem(null);
   };
 
   // Handle edit button click
@@ -97,19 +172,13 @@ export default function ConfirmedReservations() {
   };
 
   // Handle confirm edit
-  const handleConfirmEdit = async (e,isPublic=false) => {
+  const handleConfirmEdit = async (e, isPublic = false) => {
     e.preventDefault();
     setIsLoading(true);
     let req = {
       startTime: new Date(startDate),
       endTime: new Date(endDate),
-    }
-    if(isPublic){
-      req = {
-        ...req,
-        isPublic : true
-      }
-    }
+    };
     try {
       const response = await fetch(`/api/reservation-items/${editItem.id}`, {
         method: "PATCH",
@@ -149,6 +218,72 @@ export default function ConfirmedReservations() {
         </h1>
       )}
 
+      {/* Partner Preference Modal */}
+      {showPartnerPreference && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Partner Preference</h3>
+            <p className="mb-4">Would you like to specify a gender preference for your partner?</p>
+            
+            <div className="space-y-2 mb-6">
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="no-preference"
+                  name="gender-preference"
+                  value=""
+                  checked={genderPreference === ""}
+                  onChange={() => setGenderPreference("")}
+                  className="mr-2"
+                />
+                <label htmlFor="no-preference">No preference</label>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="male-preference"
+                  name="gender-preference"
+                  value="male"
+                  checked={genderPreference === "male"}
+                  onChange={() => setGenderPreference("male")}
+                  className="mr-2"
+                />
+                <label htmlFor="male-preference">Male</label>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  id="female-preference"
+                  name="gender-preference"
+                  value="female"
+                  checked={genderPreference === "female"}
+                  onChange={() => setGenderPreference("female")}
+                  className="mr-2"
+                />
+                <label htmlFor="female-preference">Female</label>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-4">
+              <button
+                className="px-4 py-2 bg-gray-300 text-black rounded-lg"
+                onClick={handleCancelPartnerRequest}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-black text-white rounded-lg"
+                onClick={handleSubmitPartnerRequest}
+              >
+                Submit Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4 overflow-y-auto max-h-96">
         {Array.isArray(reservations) &&
           reservations.map((reservation) => (
@@ -182,11 +317,6 @@ export default function ConfirmedReservations() {
                 key={item.id}
                 className="p-4 bg-white border border-gray-300 rounded-lg flex gap-4"
               >
-                {/* <img
-                  src={item.image || `/images${item.type}/.jpg`}
-                  alt={`Service ${item.serviceId}`}
-                  className="w-16 h-16 object-cover rounded-md"
-                /> */}
                 <div>
                   <h3 className="text-xl font-semibold">
                     Service ID: {item.serviceId}
@@ -207,13 +337,20 @@ export default function ConfirmedReservations() {
                       >
                         Edit
                       </button>
+                      {item.PartnerRequest.length ==0 && (
+                      <button
+                        className="px-4 py-2 bg-black text-white rounded-lg"
+                        onClick={(e) => handlePublicReservation(e, item)}
+                      >
+                        Request for Partner
+                      </button>
+                      )}
                       <button
                         className="px-4 py-2 bg-black text-white rounded-lg"
                         onClick={() => handleDeleteReservationItem(item.id)}
                       >
                         Delete
                       </button>
-                      
                     </div>
                   ) : (
                     <form onSubmit={handleConfirmEdit} className="mt-4">
@@ -245,7 +382,6 @@ export default function ConfirmedReservations() {
                       >
                         Confirm
                       </button>
-
                     </form>
                   )}
                 </div>

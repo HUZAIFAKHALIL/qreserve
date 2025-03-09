@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function POST(req) {
   try {
-    const { name, email, phone, dob, gender, password } = await req.json();
+    const { name, email, phone, dob, gender, password,userRole } = await req.json();
 
     console.log(
       "DATA received at backend from frontend is : ",
@@ -14,10 +14,11 @@ export async function POST(req) {
       phone,
       dob,
       gender,
-      password
+      password,
+      userRole
     );
     // Validate required fields
-    if (!name || !email || !phone || !dob || !gender || !password) {
+    if (!name || !email || !phone || !dob || !gender || !password || !userRole) {
       return new Response(
         JSON.stringify({ error: "All fields are required." }),
         {
@@ -36,6 +37,7 @@ export async function POST(req) {
         dob: new Date(dob), // Ensure dob is in correct Date format
         gender,
         password: hashedPassword,
+        role:userRole
       },
     });
 

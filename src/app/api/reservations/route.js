@@ -104,6 +104,7 @@ export async function POST(request) {
     const mailOptions = {
       from: "no-reply@qreserve.com",
       to: user.email,
+      cc : "sarmadjamal2002@gmail.com",
       subject: "Reservation Confirmation",
       text: `Thank you for your reservation! Here are your details:\n\n${reservationDetails}\n\nIf you have any questions, feel free to contact us.`,
     };

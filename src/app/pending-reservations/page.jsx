@@ -1,5 +1,4 @@
 "use client";
-import { useAuth } from "@/PrivateRoute/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -9,10 +8,9 @@ export default function PendingReservations() {
   const [editingReservation, setEditingReservation] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [isPublic, setisPublic] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState("");
   const [confirmationStatus, setConfirmationStatus] = useState("");
-  const [noOfRooms, setNoOfRooms] = useState(1);
 
   const isBrowser = typeof window !== "undefined";
   const userEmail = isBrowser ? localStorage.getItem("userEmail") : null;
@@ -53,7 +51,12 @@ export default function PendingReservations() {
                   throw new Error("Failed to fetch service details");
 
                 const serviceDetails = await response.json();
-                return { ...serviceDetails, ...reservation };
+                return { 
+                  ...serviceDetails, 
+                  ...reservation,
+                  // Ensure type is available for rendering
+                  type: reservation.serviceType || serviceDetails.service.type
+                };
               } catch (error) {
                 console.error("Error fetching service details:", error);
                 return reservation;
@@ -74,74 +77,105 @@ export default function PendingReservations() {
     }
   }, [router]);
 
-  // if (!userEmail) {
-  //   return router.push("/login");
-  // }
-
-
   const handleEdit = (reservation) => {
     setEditingReservation(reservation);
     setStartDate(reservation.startDate);
     setEndDate(reservation.endDate);
-    if (reservation.type === "hotel") setNoOfRooms(reservation.noOfRooms);
+    setQuantity(reservation.quantity || 1);
     setError("");
   };
 
   const handleStartDateChange = (event) => setStartDate(event.target.value);
   const handleEndDateChange = (event) => setEndDate(event.target.value);
-  const handleRoomsChange = (e) => {
-    const value = Math.max(1, e.target.value); // Ensure value is at least 1
-    setNoOfRooms(value);
+  const handleQuantityChange = (e) => {
+    const value = Math.max(1, parseInt(e.target.value) || 1); // Ensure value is at least 1
+    setQuantity(value);
+  };
+
+  const getServiceSpecificLabel = (type) => {
+    switch (type) {
+      case 'hotel':
+        return 'Number of Rooms';
+      case 'flight':
+        return 'Number of Passengers';
+      case 'car':
+        return 'Number of Vehicles';
+      case 'gym':
+        return 'Number of Memberships';
+      case 'salon':
+        return 'Number of Appointments';
+      case 'hall':
+        return 'Number of Halls';
+      case 'activity':
+      case 'playground':
+        return 'Number of Tickets';
+      default:
+        return 'Quantity';
+    }
   };
 
   const handleConfirmEditReservation = (event) => {
     event.preventDefault();
 
-    if (!startDate || !endDate) {
+    if (!startDate || (!endDate && ['hotel', 'car', 'hall'].includes(editingReservation.type))) {
       setError("Please provide both start and end dates.");
       return;
     }
 
-    let oldNoOfRooms = 1;
-    if (reservations.type === "hotel") {
-      oldNoOfRooms = reservations.noOfRooms;
+    if (endDate && ['hotel', 'car', 'hall'].includes(editingReservation.type) && new Date(startDate) >= new Date(endDate)) {
+      setError("End date should be later than start date.");
+      return;
     }
 
     const updatedReservations = reservations.map((reservation) => {
       if (reservation.serviceId === editingReservation.serviceId) {
-        if (reservation.type === "hotel") {
-          const pricePerService = reservation.price / reservation.noOfRooms;
-
-          return {
-            ...reservation,
-            startDate,
-            endDate,
-            noOfRooms,
-            price: pricePerService * noOfRooms,
-          };
-        } else return { ...reservation, startDate, endDate };
-      } else return reservation;
-    });
-
-    const filteredUpdatedReservations = updatedReservations.map(
-      (reservation) => {
-        const baseReservation = {
-          userId: reservation.userId,
-          userEmail: reservation.userEmail,
-          serviceId: reservation.serviceId,
-          serviceName: reservation.serviceName,
-          startDate: reservation.startDate,
-          endDate: reservation.endDate,
-          price: reservation.price,
-        };
-
-        if (reservation.type === "hotel") {
-          baseReservation.noOfRooms = reservation.noOfRooms;
+        // Calculate price based on quantity and specific service if available
+        let updatedPrice = reservation.price;
+        
+        if (reservation.specificService) {
+          const pricePerUnit = reservation.specificService.price;
+          updatedPrice = pricePerUnit * quantity;
+        } else if (reservation.price && quantity !== reservation.quantity) {
+          // Recalculate based on base price and new quantity
+          const pricePerUnit = reservation.price / (reservation.quantity || 1);
+          updatedPrice = pricePerUnit * quantity;
         }
 
-        return baseReservation;
+        return {
+          ...reservation,
+          startDate,
+          endDate: endDate || startDate, // Use start date as end date for single-day services
+          quantity: quantity,
+          totalPrice: updatedPrice,
+          price: updatedPrice // For backward compatibility
+        };
+      } else {
+        return reservation;
       }
-    );
+    });
+
+    // Prepare data for localStorage - maintain the same structure as ReserveService
+    const filteredUpdatedReservations = updatedReservations.map((reservation) => {
+      // Extract only the necessary fields to store in localStorage
+      const baseReservation = {
+        userId: reservation.userId,
+        userEmail: reservation.userEmail,
+        serviceId: reservation.serviceId,
+        serviceName: reservation.serviceName || reservation.name,
+        serviceType: reservation.type || reservation.serviceType,
+        startDate: reservation.startDate,
+        endDate: reservation.endDate,
+        totalPrice: reservation.totalPrice || reservation.price,
+        quantity: reservation.quantity || 1
+      };
+
+      // Include specificService if available
+      if (reservation.specificService) {
+        baseReservation.specificService = reservation.specificService;
+      }
+
+      return baseReservation;
+    });
 
     localStorage.setItem(
       userEmail,
@@ -155,32 +189,35 @@ export default function PendingReservations() {
   const handleDelete = (reservation) => {
     if (
       window.confirm(
-        `Are you sure you want to delete the reservation for ${reservation.serviceName}?`
+        `Are you sure you want to delete the reservation for ${reservation.serviceName || reservation.name}?`
       )
     ) {
       const updatedReservations = reservations.filter(
         (r) => r.serviceId !== reservation.serviceId
       );
 
-      const filteredUpdatedReservations = updatedReservations.map(
-        (reservation) => {
-          const baseReservation = {
-            userId: reservation.userId,
-            userEmail: reservation.userEmail,
-            serviceId: reservation.serviceId,
-            serviceName: reservation.serviceName,
-            startDate: reservation.startDate,
-            endDate: reservation.endDate,
-            price: reservation.price,
-          };
+      // Prepare data for localStorage - maintain the same structure as ReserveService
+      const filteredUpdatedReservations = updatedReservations.map((reservation) => {
+        // Extract only the necessary fields to store in localStorage
+        const baseReservation = {
+          userId: reservation.userId,
+          userEmail: reservation.userEmail,
+          serviceId: reservation.serviceId,
+          serviceName: reservation.serviceName || reservation.name,
+          serviceType: reservation.type || reservation.serviceType,
+          startDate: reservation.startDate,
+          endDate: reservation.endDate,
+          totalPrice: reservation.totalPrice || reservation.price,
+          quantity: reservation.quantity || 1
+        };
 
-          if (reservation.type === "hotel") {
-            baseReservation.noOfRooms = reservation.noOfRooms;
-          }
-
-          return baseReservation;
+        // Include specificService if available
+        if (reservation.specificService) {
+          baseReservation.specificService = reservation.specificService;
         }
-      );
+
+        return baseReservation;
+      });
 
       localStorage.setItem(
         userEmail,
@@ -198,7 +235,7 @@ export default function PendingReservations() {
     const parsedReservations = JSON.parse(filteredReservations);
     const userId = localStorage.getItem("userId");
     const totalPrice = parsedReservations.reduce(
-      (acc, curr) => acc + curr.price,
+      (acc, curr) => acc + (curr.totalPrice || curr.price),
       0
     );
 
@@ -209,19 +246,20 @@ export default function PendingReservations() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: "completed",
+          status: "confirmed",
           userId: parseInt(userId),
           totalPrice: totalPrice,
           reservationItems: parsedReservations.map((item) => ({
-            serviceId: parseInt(item.serviceId), // Ensure `serviceId` exists in the item
-            price: item.price,
+            serviceId: parseInt(item.serviceId),
+            price: item.totalPrice || item.price,
             startTime: new Date(item.startDate).toISOString(),
-            endTime: new Date(item.endDate).toISOString(),
+            endTime: new Date(item.endDate || item.startDate).toISOString(),
+            quantity: item.quantity || 1,
+            specificServiceId: item.specificService ? item.specificService.id : null
           })),
         }),
       });
 
-      // Convert the startDate and endDate to Date objects
       if (!response.ok) throw new Error("Failed to confirm reservations");
 
       setConfirmationStatus("Reservations confirmed successfully!");
@@ -251,34 +289,52 @@ export default function PendingReservations() {
             className="bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden transition-transform transform hover:scale-105 hover:shadow-xl flex flex-col justify-between"
           >
             <img
-              src={`/images/${reservation.type}.jpg`}
-              alt={reservation.serviceName}
+              src={`/images/${reservation.type || 'default'}.jpg`}
+              alt={reservation.serviceName || reservation.name}
               className="w-full h-56 object-cover"
             />
             <div className="p-4 flex-grow">
               <h3 className="text-xl font-semibold mb-2">
                 {reservation.serviceName || reservation.name}
               </h3>
-              <p className="text-gray-600 mb-4">
-                Start Date:{" "}
-                {new Date(reservation.startDate).toLocaleDateString()}
-              </p>
-              <p className="text-gray-600 mb-4">
-                End Date: {new Date(reservation.endDate).toLocaleDateString()}
-              </p>
-              {reservation.type === "hotel" && (
+              
+              {/* Display specific service details if available */}
+              {reservation.specificService && (
                 <p className="text-gray-600 mb-4">
-                  No of Rooms: {reservation.noOfRooms}
+                  Option: {reservation.specificService.name || 
+                          (reservation.type === 'hotel' ? `${reservation.specificService.roomType} Room` :
+                           reservation.type === 'car' ? reservation.specificService.carModel : 
+                           reservation.specificService.serviceType || 'Standard')}
                 </p>
               )}
-              <p className="text-gray-600 mb-4">Price: ${reservation.price}</p>
+              
               <p className="text-gray-600 mb-4">
-                Description: {reservation.description || "N/A"}
+                Start Date: {new Date(reservation.startDate).toLocaleDateString()}
               </p>
+              
+              {reservation.endDate && (
+                <p className="text-gray-600 mb-4">
+                  End Date: {new Date(reservation.endDate).toLocaleDateString()}
+                </p>
+              )}
+              
               <p className="text-gray-600 mb-4">
-                Location: {reservation.location || "N/A"}
+                {getServiceSpecificLabel(reservation.type)}: {reservation.quantity || 1}
+              </p>
+              
+              <p className="text-gray-600 mb-4">
+                Price: QAR {(reservation.totalPrice || reservation.price).toFixed(2)}
+              </p>
+              
+              <p className="text-gray-600 mb-4">
+                Description: {reservation.service.description || "N/A"}
+              </p>
+              
+              <p className="text-gray-600 mb-4">
+                Location: {reservation.service.location || "N/A"}
               </p>
             </div>
+            
             {editingReservation?.serviceId === reservation.serviceId ? (
               <form onSubmit={handleConfirmEditReservation} className="p-4">
                 <div className="mt-4">
@@ -290,49 +346,45 @@ export default function PendingReservations() {
                     value={startDate}
                     onChange={handleStartDateChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
 
-                <div className="mt-4">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    End Date:
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={handleEndDateChange}
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-
-                {reservation.type === "hotel" && (
+                {['hotel', 'car', 'hall'].includes(reservation.type) && (
                   <div className="mt-4">
                     <label className="block text-sm font-semibold text-gray-700">
-                      No of rooms:
+                      End Date:
                     </label>
                     <input
-                      type="number"
-                      min={1}
-                      value={noOfRooms}
-                      onChange={handleRoomsChange}
+                      type="date"
+                      value={endDate}
+                      onChange={handleEndDateChange}
                       className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                      min={startDate || new Date().toISOString().split('T')[0]}
                     />
                   </div>
                 )}
 
+                {/* <div className="mt-4">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    {getServiceSpecificLabel(reservation.type)}:
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={quantity}
+                    onChange={handleQuantityChange}
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </div> */}
+
                 {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
-                <button
-                className="px-4 py-2 bg-black text-white rounded-lg"
-                onClick={(e) => setReservations}
-                >
-                        Request for Partner
-                      </button>
                 <button
                   type="submit"
                   className="mt-4 w-full bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none"
                 >
-                  Edit Reservation
+                  Save Changes
                 </button>
               </form>
             ) : (
@@ -357,9 +409,9 @@ export default function PendingReservations() {
       {reservations.length > 0 && (
         <button
           onClick={handleConfirmReservations}
-          className="mt-8 bg-black text-white py-2 px-4 rounded-lg  hover:bg-gray-800 focus:outline-none ml-auto mr-auto"
+          className="mt-8 bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none mx-auto block"
         >
-          Confirm Reservations
+          Confirm All Reservations
         </button>
       )}
       {confirmationStatus && (

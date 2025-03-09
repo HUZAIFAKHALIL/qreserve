@@ -1,3 +1,5 @@
+//src/app/(auth)/login/page.jsx
+
 "use client";
 import { useState } from "react";
 import Link from "next/link";
@@ -45,6 +47,8 @@ export default function Login() {
         localStorage.setItem("token", data.token);
         localStorage.setItem("userEmail", data.userEmail);
         localStorage.setItem("userId", data.userId);
+        localStorage.setItem("userRole",data.userRole)
+      
         window.location.href = "/";
       } else {
         setError(data.error || "Login failed");

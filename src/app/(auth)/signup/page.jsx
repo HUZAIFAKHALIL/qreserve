@@ -10,6 +10,7 @@ export default function Signup() {
   const [phone, setPhone] = useState("");
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
+  const [userRole,setUserRole] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +27,7 @@ export default function Signup() {
       dob,
       gender,
       password,
+      userRole
     };
 
     setIsSubmitting(true);
@@ -142,6 +144,31 @@ export default function Signup() {
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
+              </select>
+              <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-black">
+                ▼
+              </span>
+            </div>
+          </div>
+          <div className="mb-4">
+            <label
+              htmlFor="userType"
+              className="block text-base font-medium mb-1"
+            >
+              User Role
+            </label>
+            <div className="relative">
+              <select
+                id="userRole"
+                value={userRole}
+                onChange={(e) => setUserRole(e.target.value)}
+                className={`${inputClassName} appearance-none bg-white text-black pr-8`}
+                required
+              >
+                <option value="">Select your Role</option>
+                <option value="BUYER">Buyer</option>
+                <option value="SELLER">Seller</option>
+                <option value="ADMIN">admin</option>
               </select>
               <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-black">
                 ▼

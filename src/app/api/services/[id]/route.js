@@ -2,51 +2,69 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET(req, { params }) {
-  let { id } = params; // Extract the 'id' from the URL parameters
-  console.log("id is: ", id);
 
-  // Check if the id is valid, and convert it to an integer
-  id = parseInt(id, 10);
-
-  // Validate if id is a valid number
-  if (isNaN(id)) {
-    return new Response(
-      JSON.stringify({ error: "ID parameter must be a valid number" }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
-
+export async function GET(request, { params }) {
   try {
-    // Fetch the service based on the extracted 'id'
+    const { id } = params;
     const service = await prisma.service.findUnique({
-      where: { id: id },
+      where: { id: parseInt(id) },
+      include: {
+        seller: true,
+      },
     });
-
-    console.log("Service is: ", service);
 
     if (!service) {
-      return new Response(JSON.stringify({ error: "Service not found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ message: "Service not found" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    return new Response(JSON.stringify(service), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    let specificService = null;
+
+    switch (service.type) {
+      case "hotel":
+        specificService = await prisma.hotelService.findMany({ where: { serviceId: service.id } });
+        break;
+      case "car":
+        specificService = await prisma.carService.findMany({ where: { serviceId: service.id } });
+        break;
+      case "gym":
+        specificService = await prisma.gymService.findMany({ where: { serviceId: service.id } });
+        break;
+      case "salon":
+        specificService = await prisma.salonService.findMany({ where: { serviceId: service.id } });
+        break;
+      case "hall":
+        specificService = await prisma.hallService.findMany({ where: { serviceId: service.id } });
+        break;
+      case "activity":
+        specificService = await prisma.activityService.findMany({ where: { serviceId: service.id } });
+        break;
+      case "flight":
+        specificService = await prisma.flightService.findMany({ where: { serviceId: service.id } });
+        break;
+      case "playground":
+        specificService = await prisma.playgroundService.findMany({ where: { serviceId: service.id } });
+        break;
+      default:
+        return new Response(
+          JSON.stringify({ message: "Invalid service type" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+    }
+
+    return new Response(
+      JSON.stringify({ service, specificService }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+
   } catch (error) {
     console.error("Error fetching service:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to fetch service details" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      JSON.stringify({ message: "Error fetching service", error: error.message }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
+
