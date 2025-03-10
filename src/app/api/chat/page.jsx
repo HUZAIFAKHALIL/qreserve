@@ -14,19 +14,16 @@ export default function ChatSupport() {
   const router = useRouter();
   const messagesEndRef = useRef(null);
 
-  // Scroll to bottom of chat
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Redirect if not logged in
   useEffect(() => {
     if (!isLoggedIn) {
       router.push('/login');
     }
   }, [isLoggedIn, router]);
 
-  // Fetch chat history when component mounts
   useEffect(() => {
     if (userId) {
       fetchChatHistory();
@@ -71,7 +68,6 @@ export default function ChatSupport() {
       
       const data = await response.json();
       
-      // Add new messages to chat history
       setChatHistory(prev => [
         ...prev, 
         data.userMessage, 

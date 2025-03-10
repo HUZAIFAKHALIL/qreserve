@@ -261,7 +261,7 @@ export default function ChatWidget() {
   const [chatHistory, setChatHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const { userId } = useCurrentUser();
+  // const { userId } = useCurrentUser();
   const messagesEndRef = useRef(null);
   const lastMessageTimeRef = useRef(0);
   const inputRef = useRef(null);
@@ -272,30 +272,50 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const { userId } = useCurrentUser(); // Add loading state
+
   useEffect(() => {
-    if (userId && isOpen) {
+    if (userId && isOpen && !loading) {
+      console.log('Attempting to fetch chat history with userId:', userId);
       fetchChatHistory();
       if (inputRef.current) {
         inputRef.current.focus();
       }
     }
-  }, [userId, isOpen]);
+  }, [userId, isOpen, loading]);
 
   useEffect(() => {
     scrollToBottom();
   }, [chatHistory]);
 
   const fetchChatHistory = async () => {
+    if (loading) return; // Don't fetch if still loading user
+    if (!userId) {
+      console.error('No userId available for chat history fetch');
+      setError('User ID not available. Please log in again.');
+      return;
+    }
+    
     setError(null);
     try {
+      console.log(`Fetching chat history for userId: ${userId}`);
       const response = await fetch(`/api/chat?userId=${userId}`);
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch chat history');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
+        throw new Error(`Failed to fetch chat history: ${response.status}`);
       }
+      
       const data = await response.json();
+      console.log('Fetched chat data:', data);
       
       if (data.chatHistory) {
         setChatHistory(data.chatHistory);
+      } else {
+        console.warn('No chat history in response data');
+        setChatHistory([]);
       }
     } catch (error) {
       console.error('Error fetching chat history:', error);
@@ -306,7 +326,14 @@ export default function ChatWidget() {
   const sendMessage = async (e) => {
     e.preventDefault();
     
-    if (!message.trim() || !userId) return;
+
+
+    if (!message.trim()) return;
+    if (!userId) {
+        setError('User ID not available. Please log in again.');
+        return;
+      }
+
     
     const now = Date.now();
     if (now - lastMessageTimeRef.current < MESSAGE_RATE_LIMIT) {
@@ -426,33 +453,37 @@ export default function ChatWidget() {
                 <p className="text-sm text-gray-400 mt-1">Type your message below to get started</p>
               </div>
             ) : (
-              chatHistory.map((chat) => (
-                <div
-                  key={chat?.id || `chat-${Math.random()}`}
-                  className={clsx(
-                    "flex gap-3 items-end w-full",
-                    chat?.isBot || chat?.role === 'assistant' ? "justify-start" : "justify-end flex-row-reverse"
-                  )}
-                >
-                  {chat?.isBot || chat?.role === 'assistant' ? <BotAvatar /> : <UserAvatar />}
+              chatHistory.map((chat) => {
+                const isUser = !chat?.isBot && chat?.role !== 'assistant';
+                return (
                   <div
+                    key={chat?.id || `chat-${Math.random()}`}
                     className={clsx(
-                      "max-w-[70%] p-3 rounded-2xl text-sm",
-                      chat?.isBot || chat?.role === 'assistant'
-                        ? "bg-gray-100 text-gray-800 rounded-bl-none"
-                        : "bg-black text-white rounded-br-none"
+                      "flex gap-3 items-end w-full",
+                      isUser ? "justify-end" : "justify-start"
                     )}
                   >
-                    <p className="whitespace-pre-wrap">{chat?.message || chat?.content}</p>
-                    <span className={clsx(
-                      "text-[10px] block mt-1",
-                      chat?.isBot || chat?.role === 'assistant' ? "text-gray-500" : "text-gray-300"
-                    )}>
-                      {chat?.createdAt ? format(new Date(chat.createdAt), 'HH:mm') : format(new Date(), 'HH:mm')}
-                    </span>
+                    {!isUser && <BotAvatar />}
+                    <div
+                      className={clsx(
+                        "max-w-[70%] p-3 rounded-2xl text-sm",
+                        isUser
+                          ? "bg-black text-white rounded-br-none"
+                          : "bg-gray-100 text-gray-800 rounded-bl-none"
+                      )}
+                    >
+                      <p className="whitespace-pre-wrap">{chat?.message || chat?.content}</p>
+                      <span className={clsx(
+                        "text-[10px] block mt-1",
+                        isUser ? "text-gray-300" : "text-gray-500"
+                      )}>
+                        {chat?.createdAt ? format(new Date(chat.createdAt), 'HH:mm') : format(new Date(), 'HH:mm')}
+                      </span>
+                    </div>
+                    {isUser && <UserAvatar />}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>

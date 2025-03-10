@@ -61,6 +61,11 @@ export default function Footer() {
                   Terms & Conditions
                 </Link>
               </li>
+              <li>
+              <Link href="/help"className="hover:underline">
+                    FAQ
+            </Link>
+            </li>
             </ul>
           </div>
         </div>
