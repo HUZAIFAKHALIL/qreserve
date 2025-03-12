@@ -1,6 +1,5 @@
-// AdminChatMonitoring.jsx
 import { useState, useEffect } from 'react';
-import { Search, User, MessageSquare, Calendar } from 'lucide-react';
+import { Search, User, MessageSquare, Calendar, Trash2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 export const AdminChatMonitoring = () => {
@@ -9,29 +8,61 @@ export const AdminChatMonitoring = () => {
   const [error, setError] = useState(null);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/services/admin/chat'); // ✅ Corrected Path
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch conversations. Status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setConversations(data.conversations || []);
-      } catch (err) {
-        console.error('Error fetching conversations:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchConversations();
   }, []);
+
+  const fetchConversations = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/services/admin/chat');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch conversations. Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setConversations(data.conversations || []);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedConversation || !selectedConversation.user?.id) return;
+    
+    try {
+      setDeleteLoading(true);
+      setDeleteError(null);
+      
+      const response = await fetch(`/api/services/admin/chat/${selectedConversation.user.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete conversation. Status: ${response.status}`);
+      }
+      
+      // Remove the deleted conversation from state
+      setConversations(conversations.filter(
+        convo => convo.user?.id !== selectedConversation.user?.id
+      ));
+      setSelectedConversation(null);
+      setShowDeleteConfirm(false);
+    } catch (err) {
+      console.error('Error deleting conversation:', err);
+      setDeleteError(err.message);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const filteredConversations = conversations.filter(convo => {
     const userName = convo.user?.name?.toLowerCase() || '';
@@ -127,16 +158,76 @@ export const AdminChatMonitoring = () => {
             {selectedConversation ? (
               <>
                 <div className="p-4 border-b bg-gray-50">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="w-5 h-5 text-gray-600" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <User className="w-5 h-5 text-gray-600" />
+                      </div>
+                      <div className="ml-3">
+                        <div className="font-semibold">{selectedConversation.user?.name || 'Unknown User'}</div>
+                        <div className="text-sm text-gray-500">{selectedConversation.user?.email || `ID: ${selectedConversation.user?.id}`}</div>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <div className="font-semibold">{selectedConversation.user?.name || 'Unknown User'}</div>
-                      <div className="text-sm text-gray-500">{selectedConversation.user?.email || `ID: ${selectedConversation.user?.id}`}</div>
-                    </div>
+                    {/* Delete Button */}
+                    <button 
+                      className="p-2 text-gray-500 hover:text-red-600 rounded-full hover:bg-gray-100 focus:outline-none"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDeleteConfirm(true);
+                      }}
+                      disabled={deleteLoading}
+                      title="Delete conversation"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
+                
+                {/* Delete Confirmation Modal */}
+                {showDeleteConfirm && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                      <div className="flex items-center text-red-600 mb-4">
+                        <AlertCircle className="w-6 h-6 mr-2" />
+                        <h3 className="text-lg font-semibold">Confirm Deletion</h3>
+                      </div>
+                      <p className="mb-6">
+                        Are you sure you want to delete all chat history for 
+                        <strong> {selectedConversation.user?.name || selectedConversation.user?.email || 'this user'}</strong>? 
+                        This action cannot be undone.
+                      </p>
+                      {deleteError && (
+                        <div className="p-3 mb-4 bg-red-50 text-red-600 rounded border border-red-200">
+                          <p>{deleteError}</p>
+                        </div>
+                      )}
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                          onClick={() => setShowDeleteConfirm(false)}
+                          disabled={deleteLoading}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                          onClick={handleDelete}
+                          disabled={deleteLoading}
+                        >
+                          {deleteLoading ? (
+                            <span className="flex items-center">
+                              <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Deleting...
+                            </span>
+                          ) : (
+                            'Delete'
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
                   {selectedConversation.messages.map((message) => (
                     <div
