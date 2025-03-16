@@ -1,0 +1,46 @@
+-- CREATE OR REPLACE FUNCTION complete_reservations() RETURNS TRIGGER AS $$
+-- BEGIN
+--   IF NEW.endTime <= NOW() THEN
+--     INSERT INTO "CompletedReservation" (
+--       reservationId, 
+--       userId, 
+--       totalPrice, 
+--       completedAt
+--     ) 
+--     VALUES (
+--       NEW.id, 
+--       (SELECT "userId" FROM "Reservation" WHERE id = NEW."reservationId"), 
+--       NEW.price, 
+--       NOW()
+--     );
+    
+--     INSERT INTO "Payment" (
+--       reservationId, 
+--       userId, 
+--       amount, 
+--       status, 
+--       createdAt
+--     ) 
+--     VALUES (
+--       NEW.id, 
+--       (SELECT "userId" FROM "Reservation" WHERE id = NEW."reservationId"), 
+--       NEW.price, 
+--       'completed', 
+--       NOW()
+--     );
+    
+--     UPDATE "Reservation" 
+--     SET status = 'completed' 
+--     WHERE id = NEW."reservationId";
+--   END IF;
+--   RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql;
+
+-- DROP TRIGGER IF EXISTS reservation_completion_trigger ON "ReservationItem";
+
+-- CREATE TRIGGER reservation_completion_trigger 
+-- AFTER UPDATE ON "ReservationItem" 
+-- FOR EACH ROW 
+-- WHEN (NEW."endTime" <= NOW() AND OLD."endTime" > NOW()) 
+-- EXECUTE FUNCTION complete_reservations();

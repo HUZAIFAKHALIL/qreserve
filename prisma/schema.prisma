@@ -1,225 +1,220 @@
-  generator client {
-    provider = "prisma-client-js"
-  }
+generator client {
+  provider = "prisma-client-js"
+}
 
-  datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
-  }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-  model ChatMessage {
-    id        Int      @id @default(autoincrement())
-    userId    Int
-    message   String
-    isBot     Boolean  @default(false)
-    createdAt DateTime @default(now())
-  
-    user      User     @relation(fields: [userId], references: [id])
-  }
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  isBot     Boolean  @default(false)
+  message   String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+}
 
+model User {
+  id                   Int                    @id @default(autoincrement())
+  name                 String
+  email                String                 @unique
+  phone                String                 @unique
+  dob                  DateTime
+  gender               String
+  password             String
+  createdAt            DateTime               @default(now())
+  token                String?
+  tokenExpiry          DateTime?
+  updatedAt            DateTime               @default(now()) @updatedAt
+  role                 UserRole               @default(BUYER)
+  chatMessages         ChatMessage[]
+  CompletedReservation CompletedReservation[]
+  receivedRequests     PartnerRequest[]       @relation("ReceivedRequests")
+  sentRequests         PartnerRequest[]       @relation("SentRequests")
+  Payment              Payment[]
+  reservations         Reservation[]
+  Review               Review[]
+  services             Service[]
+}
 
-  model User {
-    id                   Int                    @id @default(autoincrement())
-    name                 String
-    email                String                 @unique
-    phone                String                 @unique
-    dob                  DateTime
-    gender               String
-    password             String
-    role                 UserRole               @default(BUYER) // Defines user roles (BUYER, SELLER, ADMIN)
-    services             Service[] // Relationship: A seller can have multiple services
-    reservations         Reservation[]
-    createdAt            DateTime               @default(now())
-    updatedAt            DateTime               @default(now()) @updatedAt
-    token                String?
-    tokenExpiry          DateTime?
-    CompletedReservation CompletedReservation[]
-    Payment              Payment[]
-    sentRequests         PartnerRequest[]       @relation("SentRequests")
-    receivedRequests     PartnerRequest[]       @relation("ReceivedRequests")
-    chatMessages         ChatMessage[]
-    
-  }
+model Service {
+  id                 Int                 @id @default(autoincrement())
+  type               String
+  name               String
+  description        String?
+  location           String?
+  rating             Float?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  isApproved         Boolean             @default(false)
+  sellerId           Int
+  activityServices   ActivityService[]
+  carServices        CarService[]
+  flightServices     FlightService[]
+  gymServices        GymService[]
+  hallServices       HallService[]
+  hotelServices      HotelService[]
+  playgroundServices PlaygroundService[]
+  ReservationItem    ReservationItem[]
+  Review             Review[]
+  salonServices      SalonService[]
+  seller             User                @relation(fields: [sellerId], references: [id])
+}
 
-  model Service {
-    id          Int     @id @default(autoincrement())
-    sellerId    Int // Foreign key to Seller (User)
-    type        String // e.g., "hotel", "car", "gym"
-    name        String
-    description String?
-    location    String?
-    rating      Float?
-    isApproved  Boolean @default(false)
+model SalonService {
+  id             Int     @id @default(autoincrement())
+  serviceId      Int
+  salonSpecialty String
+  price          Float
+  service        Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    seller    User     @relation(fields: [sellerId], references: [id])
+model HotelService {
+  id         Int     @id @default(autoincrement())
+  serviceId  Int
+  roomType   String
+  amenities  String?
+  hotelStars Int?
+  noOfRooms  Int?
+  price      Float
+  service    Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
-    // Relationships
-    hotelServices      HotelService[]
-    carServices        CarService[]
-    gymServices        GymService[]
-    salonServices      SalonService[]
-    hallServices       HallService[]
-    activityServices   ActivityService[]
-    flightServices     FlightService[]
-    playgroundServices PlaygroundService[]
-    ReservationItem    ReservationItem[]
-  }
+model CarService {
+  id          Int     @id @default(autoincrement())
+  serviceId   Int
+  carModel    String
+  carType     String
+  carCapacity Int
+  price       Float
+  service     Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
-  model SalonService {
-    id             Int    @id @default(autoincrement())
-    serviceId      Int
-    salonSpecialty String // e.g., Haircut, Facial, Makeup
-    price          Float // Price directly inside salon service
+model GymService {
+  id              Int     @id @default(autoincrement())
+  serviceId       Int
+  gymFacilities   String?
+  membershipTypes String?
+  operatingHours  String?
+  price           Float
+  service         Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
-    service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  }
+model FlightService {
+  id             Int     @id @default(autoincrement())
+  serviceId      Int
+  airlineName    String
+  flightClass    String
+  seatsAvailable Int
+  price          Float
+  service        Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
-  model HotelService {
-    id         Int     @id @default(autoincrement())
-    serviceId  Int
-    roomType   String
-    amenities  String?
-    hotelStars Int?
-    noOfRooms  Int?
-    price      Float // Price directly inside hotel service
+model HallService {
+  id           Int     @id @default(autoincrement())
+  serviceId    Int
+  hallCapacity Int
+  eventType    String
+  price        Float
+  service      Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
-    service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  }
+model ActivityService {
+  id           Int     @id @default(autoincrement())
+  serviceId    Int
+  activityType String
+  price        Float
+  service      Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
-  model CarService {
-    id          Int    @id @default(autoincrement())
-    serviceId   Int
-    carModel    String
-    carType     String
-    carCapacity Int
-    price       Float // Price directly inside car service
+model PlaygroundService {
+  id             Int     @id @default(autoincrement())
+  serviceId      Int
+  playgroundType String
+  ageGroup       String?
+  equipment      String?
+  price          Float
+  service        Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
 
-    service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  }
+model Reservation {
+  id               Int               @id @default(autoincrement())
+  userId           Int
+  status           String
+  totalPrice       Float
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  user             User              @relation(fields: [userId], references: [id])
+  reservationItems ReservationItem[]
+}
 
-  model GymService {
-    id              Int     @id @default(autoincrement())
-    serviceId       Int
-    gymFacilities   String?
-    membershipTypes String?
-    operatingHours  String?
-    price           Float // Price directly inside gym service
+model ReservationItem {
+  id                   Int                   @id @default(autoincrement())
+  reservationId        Int
+  serviceId            Int
+  price                Float
+  startTime            DateTime
+  endTime              DateTime
+  modifiedAt           DateTime?
+  editable             Boolean               @default(true)
+  userId               String?
+  CompletedReservation CompletedReservation?
+  PartnerRequest       PartnerRequest[]
+  Payment              Payment?
+  reservation          Reservation           @relation(fields: [reservationId], references: [id])
+  service              Service               @relation(fields: [serviceId], references: [id])
+}
 
-    service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  }
+model PartnerRequest {
+  id                Int             @id @default(autoincrement())
+  requestUser       Int
+  partnerUser       Int?
+  status            String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  filter            Json
+  reservationItemID Int
+  partner           User?           @relation("ReceivedRequests", fields: [partnerUser], references: [id])
+  requester         User            @relation("SentRequests", fields: [requestUser], references: [id])
+  reservationItem   ReservationItem @relation(fields: [reservationItemID], references: [id])
+}
 
-  model FlightService {
-    id             Int    @id @default(autoincrement())
-    serviceId      Int
-    airlineName    String
-    flightClass    String
-    seatsAvailable Int
-    price          Float // Price directly inside flight service
+model CompletedReservation {
+  id            Int             @id @default(autoincrement())
+  reservationId Int             @unique
+  userId        Int
+  totalPrice    Float
+  completedAt   DateTime        @default(now())
+  reservation   ReservationItem @relation(fields: [reservationId], references: [id])
+  user          User            @relation(fields: [userId], references: [id])
+}
 
-    service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  }
+model Payment {
+  id            Int             @id @default(autoincrement())
+  reservationId Int             @unique
+  userId        Int
+  amount        Float
+  status        String
+  createdAt     DateTime        @default(now())
+  reservation   ReservationItem @relation(fields: [reservationId], references: [id])
+  user          User            @relation(fields: [userId], references: [id])
+}
 
-  model HallService {
-    id           Int    @id @default(autoincrement())
-    serviceId    Int
-    hallCapacity Int
-    eventType    String
-    price        Float // Price directly inside hall service
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  serviceId Int
+  rating    Float
+  comment   String?
+  createdAt DateTime @default(now())
+  Service   Service  @relation(fields: [serviceId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+}
 
-    service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  }
-
-  model ActivityService {
-    id           Int    @id @default(autoincrement())
-    serviceId    Int
-    activityType String
-    price        Float // Price directly inside activity service
-
-    service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  }
-
-  model PlaygroundService {
-    id             Int     @id @default(autoincrement())
-    serviceId      Int
-    playgroundType String
-    ageGroup       String?
-    equipment      String?
-    price          Float // Price directly inside playground service
-
-    service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  }
-
-  model Reservation {
-    id         Int      @id @default(autoincrement())
-    userId     Int
-    status     String
-    totalPrice Float
-    createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
-
-    user             User              @relation(fields: [userId], references: [id])
-    reservationItems ReservationItem[]
-  }
-
-  model ReservationItem {
-    id                   Int                   @id @default(autoincrement())
-    reservationId        Int
-    serviceId            Int
-    price                Float
-    startTime            DateTime
-    endTime              DateTime
-    modifiedAt           DateTime?
-    editable             Boolean               @default(true)
-    reservation          Reservation           @relation(fields: [reservationId], references: [id])
-    service              Service               @relation(fields: [serviceId], references: [id])
-    CompletedReservation CompletedReservation?
-    Payment              Payment?
-    PartnerRequest       PartnerRequest[]
-  }
-  model PartnerRequest {
-    id                 Int              @id @default(autoincrement())
-    requestUser        Int
-    partnerUser        Int?
-    status            String
-    createdAt         DateTime         @default(now())
-    updatedAt         DateTime         @updatedAt
-    filter            Json
-    reservationItemID Int
-    reservationItem   ReservationItem  @relation(fields: [reservationItemID], references: [id])
-
-    requester           User      @relation("SentRequests", fields: [requestUser], references: [id])
-    partner             User?      @relation("ReceivedRequests", fields: [partnerUser], references: [id])
-  }
-
-
-  model CompletedReservation {
-    id            Int      @id @default(autoincrement())
-    reservationId Int      @unique
-    userId        Int
-    totalPrice    Float
-    completedAt   DateTime @default(now())
-
-    reservation ReservationItem @relation(fields: [reservationId], references: [id])
-    user        User            @relation(fields: [userId], references: [id])
-  }
-
-  model Payment {
-    id            Int      @id @default(autoincrement())
-    reservationId Int      @unique
-    userId        Int
-    amount        Float
-    status        String
-    createdAt     DateTime @default(now())
-
-    reservation ReservationItem @relation(fields: [reservationId], references: [id])
-    user        User            @relation(fields: [userId], references: [id])
-  }
-
-  // Enum for defining user roles
-  enum UserRole {
-    BUYER
-    SELLER
-    ADMIN
-  }
+enum UserRole {
+  BUYER
+  SELLER
+  ADMIN
+}

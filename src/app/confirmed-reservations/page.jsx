@@ -47,7 +47,13 @@ export default function ConfirmedReservations() {
   }
 
   // Handle selecting a reservation
-  const handleSelectReservation = async (reservationId) => {
+  const handleSelectReservation = async (reservationId, status) => {
+    
+    if (status === "completed") {
+      router.push(`/reviews`);
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const response = await fetch(`/api/reservations/${reservationId}/items`);
@@ -289,13 +295,17 @@ export default function ConfirmedReservations() {
           reservations.map((reservation) => (
             <div
               key={reservation.id}
-              className="p-4 bg-gray-100 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-200 transition"
-              onClick={() => handleSelectReservation(reservation.id)}
+              className={`p-4 ${reservation.status === "completed" ? "bg-green-100" : "bg-gray-100"} border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-200 transition`}
+              onClick={() => handleSelectReservation(reservation.id, reservation.status)}
             >
               <h2 className="text-xl font-semibold">
                 Reservation ID: {reservation.id}
               </h2>
-              <p className="text-sm">Status: {reservation.status}</p>
+              <p className="text-sm">
+                Status: {reservation.status} 
+                {reservation.status === "completed" && 
+                 <span className="ml-2 text-green-600 font-semibold">(Click to leave a review)</span>}
+              </p>
               <p className="text-sm">
                 Total Price: ${reservation.totalPrice.toFixed(2)}
               </p>
@@ -337,7 +347,7 @@ export default function ConfirmedReservations() {
                       >
                         Edit
                       </button>
-                      {item.PartnerRequest.length ==0 && (
+                      {item.PartnerRequest.length === 0 && (
                       <button
                         className="px-4 py-2 bg-black text-white rounded-lg"
                         onClick={(e) => handlePublicReservation(e, item)}

@@ -230,47 +230,48 @@ export default function PendingReservations() {
 
   const handleConfirmReservations = async () => {
     setConfirmationStatus("Saving reservations...");
+    router.push("/checkout");
+    
+    // const filteredReservations = localStorage.getItem(userEmail);
+    // const parsedReservations = JSON.parse(filteredReservations);
+    // const userId = localStorage.getItem("userId");
+    // const totalPrice = parsedReservations.reduce(
+    //   (acc, curr) => acc + (curr.totalPrice || curr.price),
+    //   0
+    // );
 
-    const filteredReservations = localStorage.getItem(userEmail);
-    const parsedReservations = JSON.parse(filteredReservations);
-    const userId = localStorage.getItem("userId");
-    const totalPrice = parsedReservations.reduce(
-      (acc, curr) => acc + (curr.totalPrice || curr.price),
-      0
-    );
+    // try {
+    //   const response = await fetch("/api/reservations", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({
+    //       status: "confirmed",
+    //       userId: parseInt(userId),
+    //       totalPrice: totalPrice,
+    //       reservationItems: parsedReservations.map((item) => ({
+    //         serviceId: parseInt(item.serviceId),
+    //         price: item.totalPrice || item.price,
+    //         startTime: new Date(item.startDate).toISOString(),
+    //         endTime: new Date(item.endDate || item.startDate).toISOString(),
+    //         quantity: item.quantity || 1,
+    //         specificServiceId: item.specificService ? item.specificService.id : null
+    //       })),
+    //     }),
+    //   });
 
-    try {
-      const response = await fetch("/api/reservations", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: "confirmed",
-          userId: parseInt(userId),
-          totalPrice: totalPrice,
-          reservationItems: parsedReservations.map((item) => ({
-            serviceId: parseInt(item.serviceId),
-            price: item.totalPrice || item.price,
-            startTime: new Date(item.startDate).toISOString(),
-            endTime: new Date(item.endDate || item.startDate).toISOString(),
-            quantity: item.quantity || 1,
-            specificServiceId: item.specificService ? item.specificService.id : null
-          })),
-        }),
-      });
+    //   if (!response.ok) throw new Error("Failed to confirm reservations");
 
-      if (!response.ok) throw new Error("Failed to confirm reservations");
+    //   setConfirmationStatus("Reservations confirmed successfully!");
+    //   localStorage.removeItem(userEmail); // Clear the reservations after successful confirmation
+    //   setReservations([]);
 
-      setConfirmationStatus("Reservations confirmed successfully!");
-      localStorage.removeItem(userEmail); // Clear the reservations after successful confirmation
-      setReservations([]);
-
-      router.push("/confirmed-reservations");
-    } catch (error) {
-      setConfirmationStatus("Failed to confirm reservations");
-      console.error("Error confirming reservations:", error);
-    }
+    //   router.push("/checkout");
+    // } catch (error) {
+    //   setConfirmationStatus("Failed to confirm reservations");
+    //   console.error("Error confirming reservations:", error);
+    // }
   };
 
   if (loading) return <div className="p-6">Loading...</div>;
@@ -428,3 +429,4 @@ export default function PendingReservations() {
     </div>
   );
 }
+
