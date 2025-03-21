@@ -1,5 +1,3 @@
-//src/app/(auth)/login/page.jsx
-
 "use client";
 import { useState } from "react";
 import Link from "next/link";
@@ -7,11 +5,11 @@ import PasswordField from "@/components/PasswordField";
 import { useRouter } from "next/navigation";
 
 export default function Login() {
-  const [identifier, setIdentifier] = useState(""); // Can be email or phone number
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [loginWithEmail, setLoginWithEmail] = useState(true); // State to toggle between email and phone login
-  const [error, setError] = useState(""); // To store any error messages from backend
-  const [loading, setLoading] = useState(false); // To track loading state
+  const [loginWithEmail, setLoginWithEmail] = useState(true);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
 
@@ -46,9 +44,26 @@ export default function Login() {
         console.log("Login successful", data);
         localStorage.setItem("token", data.token);
         localStorage.setItem("userEmail", data.userEmail);
+        localStorage.setItem("name", data.userName);
         localStorage.setItem("userId", data.userId);
-        localStorage.setItem("userRole",data.userRole)
-      
+        localStorage.setItem("userRole", data.userRole);
+        
+        // Store discount information in localStorage for use throughout the app
+        if (data.discountInfo) {
+          localStorage.setItem("discountInfo", JSON.stringify(data.discountInfo));
+        }
+        
+        // Display signup discount notification if available
+        if (data.discountInfo?.hasSignupDiscount) {
+          const discountAmount = data.discountInfo.signupDiscountAmount;
+          const discountType = data.discountInfo.signupDiscountType;
+          const discountText = discountType === "PERCENTAGE" 
+            ? `${discountAmount}%` 
+            : `$${discountAmount}`;
+          
+          alert(`Welcome! You have a signup discount of ${discountText} available on your first reservation!`);
+        }
+        
         window.location.href = "/";
       } else {
         setError(data.error || "Login failed");
@@ -88,8 +103,13 @@ export default function Login() {
     <div className="flex justify-center items-center min-h-screen bg-white">
       <div className="w-full max-w-sm p-8 bg-white shadow-lg rounded-lg">
         <h2 className="text-3xl font-semibold text-center mb-6">Login</h2>
+        
+        {/* Signup Discount Promotion Banner */}
+        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+          <p className="text-blue-800 font-medium">New users get a special discount on their first reservation!</p>
+        </div>
+        
         <form onSubmit={handleSubmit}>
-          {/* Toggle between email and phone login */}
           <div className="mb-4">
             <label
               htmlFor="identifier"
@@ -112,22 +132,18 @@ export default function Login() {
           </div>
           {error && <p>{error}</p>}
 
-          {/* Password Field */}
           <PasswordField password={password} setPassword={setPassword} />
 
-          {/* Display error message */}
           {error && <p className="text-red-600 text-sm text-center">{error}</p>}
 
-          {/* Submit Button */}
           <button
             type="submit"
             className="w-full p-3 bg-black text-white rounded-lg hover:bg-gray-800 focus:outline-none"
-            disabled={loading} // Disable button while loading
+            disabled={loading}
           >
             {loading ? "Logging In..." : "Login"}
           </button>
 
-          {/* Forgot password option as a Link */}
           <p className="mt-4 text-center text-sm">
             <button
               className="underline text-black hover:text-blue-700 cursor-pointer bg-white"
@@ -135,15 +151,8 @@ export default function Login() {
             >
               Forgot Password
             </button>
-            {/* <Link
-              href="/forgot-password"
-              className="cursor-pointer text-black hover:text-blue-700"
-            >
-              Forgot Password?
-            </Link> */}
           </p>
 
-          {/* Sign up link */}
           <p className="mt-4 text-center">
             Don{"'"}t have an account?{" "}
             <Link
@@ -154,7 +163,6 @@ export default function Login() {
             </Link>
           </p>
 
-          {/* Toggle option between email and phone */}
           <div className="text-center mt-4">
             <button
               type="button"
@@ -163,7 +171,7 @@ export default function Login() {
             >
               {loginWithEmail ? "Login with Phone Number" : "Login with Email"}
             </button>
-            {message && <p>{message}</p>}
+            {message && <p className="mt-2 text-green-600">{message}</p>}
           </div>
         </form>
       </div>

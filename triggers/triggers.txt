@@ -1,7 +1,14 @@
 CREATE TRIGGER reservation_completion_trigger
-AFTER UPDATE ON "ReservationItem"
+BEFORE UPDATE ON "ReservationItem"
 FOR EACH ROW
 WHEN (NEW."endTime" <= NOW() AND OLD."endTime" > NOW())
+EXECUTE FUNCTION complete_reservations();
+
+
+CREATE TRIGGER reservation_insert_trigger
+BEFORE INSERT ON "ReservationItem"
+FOR EACH ROW
+WHEN (NEW."endTime" <= NOW())
 EXECUTE FUNCTION complete_reservations();
 
 
@@ -23,6 +30,5 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
 
 

@@ -168,7 +168,7 @@ export default function Signup() {
                 <option value="">Select your Role</option>
                 <option value="BUYER">Buyer</option>
                 <option value="SELLER">Seller</option>
-                <option value="ADMIN">admin</option>
+                {/* <option value="ADMIN">admin</option> */}
               </select>
               <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-black">
                 ▼

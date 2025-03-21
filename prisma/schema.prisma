@@ -16,6 +16,46 @@ model ChatMessage {
   user      User     @relation(fields: [userId], references: [id])
 }
 
+model Promotion {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String?
+  discount     Float // Discount percentage or fixed amount
+  discountType DiscountType // ENUM: PERCENTAGE or FIXED
+  isActive     Boolean       @default(true)
+  startDate    DateTime?
+  endDate      DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  serviceId    Int? // If null, applies to all services
+  service      Service?      @relation(fields: [serviceId], references: [id])
+  reservations Reservation[]
+}
+
+model LoyaltyDiscount {
+  id           Int          @id @default(autoincrement())
+  userId       Int          @unique
+  discount     Float // Discount percentage or fixed amount
+  discountType DiscountType
+  threshold    Int // Number of reservations required
+  user         User         @relation(fields: [userId], references: [id])
+}
+
+model SignupDiscount {
+  id           Int          @id @default(autoincrement())
+  userId       Int          @unique
+  discount     Float // Fixed discount amount
+  discountType DiscountType
+  isUsed       Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  user         User         @relation(fields: [userId], references: [id])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
 model User {
   id                   Int                    @id @default(autoincrement())
   name                 String
@@ -37,6 +77,8 @@ model User {
   reservations         Reservation[]
   Review               Review[]
   services             Service[]
+  loyaltyDiscount      LoyaltyDiscount?
+  signupDiscount       SignupDiscount?
 }
 
 model Service {
@@ -59,6 +101,7 @@ model Service {
   playgroundServices PlaygroundService[]
   ReservationItem    ReservationItem[]
   Review             Review[]
+  promotions         Promotion[]
   salonServices      SalonService[]
   seller             User                @relation(fields: [sellerId], references: [id])
 }
@@ -140,14 +183,16 @@ model PlaygroundService {
 }
 
 model Reservation {
-  id               Int               @id @default(autoincrement())
-  userId           Int
-  status           String
-  totalPrice       Float
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  user             User              @relation(fields: [userId], references: [id])
-  reservationItems ReservationItem[]
+  id                 Int               @id @default(autoincrement())
+  userId             Int
+  status             String
+  totalPrice         Float
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime              @default(now()) @updatedAt
+  user               User              @relation(fields: [userId], references: [id])
+  reservationItems   ReservationItem[]
+  appliedPromotionId Int? // Links to a promotion, if applicable
+  appliedPromotion   Promotion?        @relation(fields: [appliedPromotionId], references: [id])
 }
 
 model ReservationItem {
@@ -157,6 +202,7 @@ model ReservationItem {
   price                Float
   startTime            DateTime
   endTime              DateTime
+  updatedAt            DateTime              @db.Timestamptz
   modifiedAt           DateTime?
   editable             Boolean               @default(true)
   userId               String?

@@ -63,8 +63,7 @@ export async function PATCH(req, { params }) {
           price: newPrice, // Half price for the new user
           startTime: existingItem.startTime,
           endTime: existingItem.endTime,
-          isPublic,
-          isFilled: true, // Set the new item as filled
+          // isFilled: true, // Set the new item as filled
         },
       });
     } else {
@@ -74,8 +73,6 @@ export async function PATCH(req, { params }) {
         data: {
           startTime: new Date(startTime),
           endTime: new Date(endTime),
-          isPublic,
-          isFilled,
         },
       });
     }
@@ -91,29 +88,29 @@ export async function PATCH(req, { params }) {
     const startDate = new Date(existingItem.startTime).toLocaleDateString("en-US");
     const endDate = new Date(existingItem.endTime).toLocaleDateString("en-US");
 
-    if (existingItem.reservation?.user?.email) {
-      const originalUserMailOptions = {
-        from: "no-reply@qreserve.com",
-        to: existingItem.reservation.user.email,
-        cc: "sarmadjamal2002@gmail.com",
-        subject: "📅 Reservation Updated ✔️",
-        text: `Hello ${existingItem.reservation.user.name},\n\n🔔 Your reservation has been updated! 🔔\n\n📅 Start Date: ${startDate}\n🕒 End Date: ${endDate}\n💰 Price: $${updatedItem.price.toFixed(2)}\n\nThank you for using QReserve!\n\nBest Regards,\nQReserve Team`,
-      };
+    // if (existingItem.reservation?.user?.email) {
+    //   const originalUserMailOptions = {
+    //     from: "no-reply@qreserve.com",
+    //     to: existingItem.reservation.user.email,
+    //     cc: "huzaifa.hado@gmail.com",
+    //     subject: "📅 Reservation Updated ✔️",
+    //     text: `Hello ${existingItem.reservation.user.name},\n\n🔔 Your reservation has been updated! 🔔\n\n📅 Start Date: ${startDate}\n🕒 End Date: ${endDate}\n💰 Price: $${updatedItem.price.toFixed(2)}\n\nThank you for using QReserve!\n\nBest Regards,\nQReserve Team`,
+    //   };
 
-      await transporter.sendMail(originalUserMailOptions);
-    }
+    //   await transporter.sendMail(originalUserMailOptions);
+    // }
 
-    if (newUser && newUser.email) {
-      const newUserMailOptions = {
-        from: "no-reply@qreserve.com",
-        to: newUser.email,
-        cc: "sarmadjamal2002@gmail.com",
-        subject: "🎉 Reservation confirmation!",
-        text: `Hello ${newUser.name},\n\n🎊 A new reservation has been assigned to you! 🎊\n\n📅 Start Date: ${startDate}\n🕒 End Date: ${endDate}\n💰 Price: $${newItem.price.toFixed(2)}\n\nPlease check your reservations for details.\n\nThank you for using QReserve!\n\nBest Regards,\nQReserve Team`,
-      };
+    // if (newUser && newUser.email) {
+    //   const newUserMailOptions = {
+    //     from: "no-reply@qreserve.com",
+    //     to: newUser.email,
+    //     cc: "huzaifa.hado@gmail.com",
+    //     subject: "🎉 Reservation confirmation!",
+    //     text: `Hello ${newUser.name},\n\n🎊 A new reservation has been assigned to you! 🎊\n\n📅 Start Date: ${startDate}\n🕒 End Date: ${endDate}\n💰 Price: $${newItem.price.toFixed(2)}\n\nPlease check your reservations for details.\n\nThank you for using QReserve!\n\nBest Regards,\nQReserve Team`,
+    //   };
 
-      await transporter.sendMail(newUserMailOptions);
-    }
+    //   await transporter.sendMail(newUserMailOptions);
+    // }
 
     return NextResponse.json(updatedItem, { status: 200 });
   } catch (error) {

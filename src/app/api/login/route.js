@@ -1,14 +1,13 @@
-import bcrypt from "bcryptjs"; // For password hashing
-import jwt from "jsonwebtoken"; // For generating JWT tokens
-import { PrismaClient } from "@prisma/client"; // Prisma client
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const SECRET_KEY = process.env.JWT_SECRET_KEY; // Store JWT secret key securely
+const SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 export async function POST(req) {
-  const { identifier, password } = await req.json(); // Parse JSON body
+  const { identifier, password } = await req.json();
 
-  // Validate input
   if (!identifier || !password) {
     return new Response(
       JSON.stringify({ error: "Identifier and password are required" }),
@@ -17,13 +16,16 @@ export async function POST(req) {
   }
 
   try {
-    // Log data for debugging (consider removing in production)
     console.log("Data received at back:", identifier, password);
 
-    // Find user by email or phone
+    // Find user by email or phone with related discount information
     const user = await prisma.user.findFirst({
       where: {
         OR: [{ email: identifier }, { phone: identifier }],
+      },
+      include: {
+        signupDiscount: true,
+        loyaltyDiscount: true,
       },
     });
 
@@ -33,7 +35,6 @@ export async function POST(req) {
       });
     }
 
-    // Compare provided password with stored hashed password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return new Response(JSON.stringify({ error: "Invalid credentials" }), {
@@ -43,17 +44,30 @@ export async function POST(req) {
 
     // Generate JWT token
     const token = jwt.sign({ userId: user.id }, SECRET_KEY, {
-      expiresIn: "1h", // Token expires in 1 hour
+      expiresIn: "1h",
     });
 
-    // Send response with token
+    // Format discount information for the frontend
+    const discountInfo = {
+      hasSignupDiscount: user.signupDiscount && !user.signupDiscount.isUsed,
+      signupDiscountAmount: user.signupDiscount ? user.signupDiscount.discount : 0,
+      signupDiscountType: user.signupDiscount ? user.signupDiscount.discountType : null,
+      hasLoyaltyDiscount: !!user.loyaltyDiscount,
+      loyaltyDiscountAmount: user.loyaltyDiscount ? user.loyaltyDiscount.discount : 0,
+      loyaltyDiscountType: user.loyaltyDiscount ? user.loyaltyDiscount.discountType : null,
+      loyaltyThreshold: user.loyaltyDiscount ? user.loyaltyDiscount.threshold : 0
+    };
+
+    // Send response with token and discount information
     return new Response(
       JSON.stringify({
         message: "Login successful",
         token,
         userEmail: user.email,
         userId: user.id,
-        userRole:user.role || 'BUYER'
+        userName: user.name,
+        userRole: user.role || 'BUYER',
+        discountInfo
       }),
       { status: 200 }
     );

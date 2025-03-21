@@ -145,7 +145,7 @@ export default function ReserveService({ params }) {
     setEndDate("");
     setQuantity(1);
     alert("Reservation saved successfully!");
-    router.push("/pending-reservations");
+    router.push("/reservations");
   };
 
   // Helper function to get specific service name based on service type
