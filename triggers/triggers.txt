@@ -25,4 +25,50 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+CREATE OR REPLACE FUNCTION move_completed_reservations()
+RETURNS VOID AS $$
+BEGIN
+    INSERT INTO "CompletedReservation" ("reservationId", "userId", "totalPrice", "completedAt")
+    SELECT 
+        r."id", 
+        r."userId", 
+        ri."price", 
+        NOW()
+    FROM "ReservationItem" ri
+    JOIN "Reservation" r ON ri."reservationId" = r."id"
+    WHERE ri."endTime" >= NOW();
+
+
+    INSERT INTO "Payment" ("reservationId", "userId", "amount", "status", "createdAt")
+    SELECT 
+        r."id", 
+        r."userId", 
+        ri."price", 
+        'completed', 
+        NOW()
+    FROM "ReservationItem" ri
+    JOIN "Reservation" r ON ri."reservationId" = r."id"
+    WHERE ri."endTime" >= NOW();
+
+
+    UPDATE "Reservation"
+    SET status = 'completed'
+    WHERE id IN (
+        SELECT DISTINCT "reservationId" FROM "ReservationItem" 
+        WHERE "endTime" >= NOW()
+    );
+
+
+    UPDATE "ReservationItem"
+    SET "modifiedAt" = NOW(); 
+END;
+$$ LANGUAGE plpgsql;
+
+
+SELECT move_completed_reservations();
+
+
+
+
+
 

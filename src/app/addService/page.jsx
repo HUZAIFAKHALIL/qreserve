@@ -725,7 +725,7 @@ export default function CreateServiceForm() {
             <thead>
               <tr className="bg-gray-50">
                 <th className="border px-4 py-2 text-left">Facilities</th>
-                <th className="border px-4 py-2 text-left">Membership Types</th>
+                <th className="border px-4 py-2 text-left">Membership Pass</th>
                 <th className="border px-4 py-2 text-left">Operating Hours</th>
                 <th className="border px-4 py-2 text-left">Price</th>
                 <th className="border px-4 py-2 text-center">Actions</th>
@@ -752,8 +752,8 @@ export default function CreateServiceForm() {
                     />
                   </td>
                   <td className="border px-4 py-2">
-                    <input
-                      type="text"
+                    <select
+                      name="membershipTypes"
                       value={row.membershipTypes}
                       onChange={(e) =>
                         updateRowField(
@@ -764,9 +764,15 @@ export default function CreateServiceForm() {
                         )
                       }
                       className="w-full p-1 border rounded"
-                      placeholder="Basic, Premium, etc."
                       required
-                    />
+                    >
+                      <option value="" disabled selected>
+                        Select pass
+                      </option>
+                      <option value="Day">One Day</option>
+                      <option value="Month">One Month</option>
+                      <option value="Year">One Year</option>
+                    </select>
                   </td>
                   <td className="border px-4 py-2">
                     <input
