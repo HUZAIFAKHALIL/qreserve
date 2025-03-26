@@ -16,7 +16,9 @@ import {
     UserIcon,
     PhoneIcon,
     MailIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    UtensilsIcon,
+    SaladIcon
 } from 'lucide-react';
 
 const ServiceDetail = () => {
@@ -31,6 +33,9 @@ const ServiceDetail = () => {
     useEffect(() => {
         const role = localStorage.getItem('userRole');
         setUserRole(role);
+
+
+        console.log(serviceID)
         if (!serviceID) return;
     
         const fetchServiceDetails = async () => {
@@ -40,6 +45,7 @@ const ServiceDetail = () => {
               throw new Error('Failed to fetch service details');
             }
             const data = await response.json();
+            console.log(data, "dsadssdsd")
             setService(data.service);
             setSpecificServices(data.specificService || []);
           } catch (err) {
@@ -330,6 +336,50 @@ const ServiceDetail = () => {
     </div>
   );
 
+  const renderRestaurantDetails = () => (
+    <div className="space-y-4 border-t pt-4">
+        <h3 className="text-lg font-semibold">Restaurant Details</h3>
+        
+        {specificServices.map((restaurantOption, index) => (
+            <div key={index} className="p-4 border rounded-lg mb-4">
+                <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-medium text-lg">Dining Option</h4>
+                    <div className="flex items-center gap-1">
+                        <span className="font-bold">QAR {restaurantOption.price}</span>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p className="text-sm text-gray-500">Dining Type</p>
+                        <div className="flex items-center gap-2">
+                            <UtensilsIcon className="w-4 h-4 text-gray-400" />
+                            <p className="font-medium capitalize">{restaurantOption.diningOption}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <p className="text-sm text-gray-500">Capacity</p>
+                        <div className="flex items-center gap-2">
+                            <UsersIcon className="w-4 h-4 text-gray-400" />
+                            <p className="font-medium">{restaurantOption.numPersons} persons</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <p className="text-sm text-gray-500">Available Seats</p>
+                        <div className="flex items-center gap-2">
+                            <SaladIcon className="w-4 h-4 text-gray-400" />
+                            <p className="font-medium">{restaurantOption.seatsAvailable} seats</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ))}
+    </div>
+);
+
+
   const renderPlaygroundDetails = () => (
     <div className="space-y-4 border-t pt-4">
       <h3 className="text-lg font-semibold">Playground Details</h3>
@@ -510,6 +560,8 @@ const ServiceDetail = () => {
         return renderFlightDetails();
       case 'playground':
         return renderPlaygroundDetails();
+      case 'restaurant':
+          return renderRestaurantDetails();
       default:
         return (
           <div className="border-t pt-4">

@@ -47,6 +47,9 @@ export async function GET(request, { params }) {
       case "playground":
         specificService = await prisma.playgroundService.findMany({ where: { serviceId: service.id } });
         break;
+      case "restaurant":
+        specificService = await prisma.restaurantService.findMany({ where: { serviceId: service.id } });
+        break;
       default:
         return new Response(
           JSON.stringify({ message: "Invalid service type" }),

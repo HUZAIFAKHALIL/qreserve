@@ -20,6 +20,8 @@ function getServiceInclude(serviceType) {
       return { flightServices: true };
     case "playground":
       return { playgroundServices: true };
+    case "restaurant":
+      return { RestaurantService: true }; 
     default:
       return {}; // Return no additional relations for an unknown type
   }
@@ -27,7 +29,10 @@ function getServiceInclude(serviceType) {
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
+  console.log(searchParams, "djang");
   const serviceType = searchParams.get("serviceType");
+
+  console.log(serviceType);
 
   if (!serviceType) {
     return new Response(
@@ -40,29 +45,50 @@ export async function GET(request) {
   }
 
   try {
+    // Add a preliminary check to see if any services exist
+    const serviceCount = await prisma.service.count({
+      where: { type: serviceType },
+    });
+    console.log(`Number of ${serviceType} services:`, serviceCount);
+
     const services = await prisma.service.findMany({
       where: {
         type: serviceType,
       },
-      include: getServiceInclude(serviceType)
+      include: getServiceInclude(serviceType),
     });
 
-    const transformedServices = services.map(service => {
-      const specificServiceKey = Object.keys(service).find(key => key.endsWith("Services"));
+    console.log('Raw services:', JSON.stringify(services, null, 2));
+
+    const transformedServices = services.map((service) => {
+      const specificServiceKey = Object.keys(service).find((key) =>
+        key.endsWith("Services")
+      );
       const { [specificServiceKey]: specificService, ...rest } = service;
       return {
         ...rest,
-        specificService: specificService || null, 
+        specificService: specificService || null,
       };
     });
+
+    console.log(
+      "Transformed services:",
+      JSON.stringify(transformedServices, null, 2)
+    );
+
     return new Response(JSON.stringify(transformedServices), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error fetching services:", error);
+    console.error("Detailed Error fetching services:", error);
     return new Response(
-      JSON.stringify({ message: "Error fetching services" }),
+      JSON.stringify({
+        message: "Error fetching services",
+        errorName: error.name,
+        errorMessage: error.message,
+        errorStack: error.stack,
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
@@ -70,7 +96,6 @@ export async function GET(request) {
     );
   }
 }
-
 
 export async function POST(request) {
   try {
@@ -103,7 +128,7 @@ export async function POST(request) {
       switch (service.type) {
         case "hotel":
           await prisma.hotelService.createMany({
-            data: specificServices.map(row => ({
+            data: specificServices.map((row) => ({
               serviceId: newService.id,
               roomType: row.roomType,
               amenities: row.amenities ?? null,
@@ -116,7 +141,7 @@ export async function POST(request) {
 
         case "car":
           await prisma.carService.createMany({
-            data: specificServices.map(row => ({
+            data: specificServices.map((row) => ({
               serviceId: newService.id,
               carModel: row.carModel,
               carType: row.carType,
@@ -128,7 +153,7 @@ export async function POST(request) {
 
         case "gym":
           await prisma.gymService.createMany({
-            data: specificServices.map(row => ({
+            data: specificServices.map((row) => ({
               serviceId: newService.id,
               gymFacilities: row.gymFacilities ?? null,
               membershipTypes: row.membershipTypes ?? null,
@@ -140,7 +165,7 @@ export async function POST(request) {
 
         case "salon":
           await prisma.salonService.createMany({
-            data: specificServices.map(row => ({
+            data: specificServices.map((row) => ({
               serviceId: newService.id,
               salonSpecialty: row.salonSpecialty,
               price: parseFloat(row.price),
@@ -150,7 +175,7 @@ export async function POST(request) {
 
         case "hall":
           await prisma.hallService.createMany({
-            data: specificServices.map(row => ({
+            data: specificServices.map((row) => ({
               serviceId: newService.id,
               hallCapacity: row.hallCapacity ? parseInt(row.hallCapacity) : 0,
               eventType: row.eventType,
@@ -161,7 +186,7 @@ export async function POST(request) {
 
         case "activity":
           await prisma.activityService.createMany({
-            data: specificServices.map(row => ({
+            data: specificServices.map((row) => ({
               serviceId: newService.id,
               activityType: row.activityType,
               price: parseFloat(row.price),
@@ -171,11 +196,13 @@ export async function POST(request) {
 
         case "flight":
           await prisma.flightService.createMany({
-            data: specificServices.map(row => ({
+            data: specificServices.map((row) => ({
               serviceId: newService.id,
               airlineName: row.airlineName,
               flightClass: row.flightClass,
-              seatsAvailable: row.seatsAvailable ? parseInt(row.seatsAvailable) : 0,
+              seatsAvailable: row.seatsAvailable
+                ? parseInt(row.seatsAvailable)
+                : 0,
               price: parseFloat(row.price),
             })),
           });
@@ -183,12 +210,26 @@ export async function POST(request) {
 
         case "playground":
           await prisma.playgroundService.createMany({
-            data: specificServices.map(row => ({
+            data: specificServices.map((row) => ({
               serviceId: newService.id,
               playgroundType: row.playgroundType,
               ageGroup: row.ageGroup ?? null,
               equipment: row.equipment ?? null,
               price: parseFloat(row.price),
+            })),
+          });
+          break;
+
+        case "restaurant":
+          await prisma.restaurantService.createMany({
+            data: specificServices.map((row) => ({
+              serviceId: newService.id,
+              diningOption: row.diningOption,
+              numPersons: row.numPersons ? parseInt(row.numPersons) : 0,
+              seatsAvailable: row.seatsAvailable
+                ? parseInt(row.seatsAvailable)
+                : 0,
+              price: parseFloat(row.price || 0),
             })),
           });
           break;
@@ -202,16 +243,20 @@ export async function POST(request) {
     }
 
     return new Response(
-      JSON.stringify({ message: "Service created successfully", service: newService }),
+      JSON.stringify({
+        message: "Service created successfully",
+        service: newService,
+      }),
       { status: 201, headers: { "Content-Type": "application/json" } }
     );
-
   } catch (error) {
     console.error("Error creating service:", error);
     return new Response(
-      JSON.stringify({ message: "Error creating service", error: error.message }),
+      JSON.stringify({
+        message: "Error creating service",
+        error: error.message,
+      }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
-

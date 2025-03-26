@@ -1,34 +1,41 @@
-CREATE TRIGGER reservation_completion_trigger
-BEFORE UPDATE ON "ReservationItem"
-FOR EACH ROW
-WHEN (NEW."endTime" <= NOW() AND OLD."endTime" > NOW())
-EXECUTE FUNCTION complete_reservations();
-
-
-CREATE TRIGGER reservation_insert_trigger
-BEFORE INSERT ON "ReservationItem"
-FOR EACH ROW
-WHEN (NEW."endTime" <= NOW())
-EXECUTE FUNCTION complete_reservations();
-
-
-CREATE OR REPLACE FUNCTION complete_reservations()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION move_completed_reservations()
+RETURNS VOID AS $$
 BEGIN
-  IF NEW.endTime <= NOW() THEN
-    INSERT INTO "CompletedReservation" (reservationId, usierId, totalPrce, completedAt)
-    VALUES (NEW.id, (SELECT "userId" FROM "Reservation" WHERE id = NEW."reservationId"), NEW.price, NOW());
+    INSERT INTO "CompletedReservation" ("reservationId", "userId", "totalPrice", "completedAt")
+    SELECT 
+        r."id", 
+        r."userId", 
+        ri."price", 
+        NOW()
+    FROM "ReservationItem" ri
+    JOIN "Reservation" r ON ri."reservationId" = r."id"
+    WHERE ri."endTime" >= NOW();
 
-    INSERT INTO "Payment" (reservationId, userId, amount, status, createdAt)
-    VALUES (NEW.id, (SELECT "userId" FROM "Reservation" WHERE id = NEW."reservationId"), NEW.price, 'completed', NOW());
+
+    INSERT INTO "Payment" ("reservationId", "userId", "amount", "status", "createdAt")
+    SELECT 
+        r."id", 
+        r."userId", 
+        ri."price", 
+        'completed', 
+        NOW()
+    FROM "ReservationItem" ri
+    JOIN "Reservation" r ON ri."reservationId" = r."id"
+    WHERE ri."endTime" >= NOW();
+
 
     UPDATE "Reservation"
     SET status = 'completed'
-    WHERE id = NEW."reservationId";
-  END IF;
-  
-  RETURN NEW;
+    WHERE id IN (
+        SELECT DISTINCT "reservationId" FROM "ReservationItem" 
+        WHERE "endTime" >= NOW()
+    );
+
+
+    UPDATE "ReservationItem"
+    SET "modifiedAt" = NOW(); 
 END;
 $$ LANGUAGE plpgsql;
 
 
+SELECT move_completed_reservations();

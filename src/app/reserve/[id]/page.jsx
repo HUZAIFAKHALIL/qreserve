@@ -14,6 +14,15 @@ export default function ReserveService({ params }) {
   const [error, setError] = useState("");
   const [totalPrice, setTotalPrice] = useState(0);
   
+
+  const [withDriver, setWithDriver] = useState(false);
+
+  const handleCheckboxChange = () => {
+    setWithDriver(!withDriver);
+  };
+
+
+  
   const router = useRouter();
   
   // Get user information from localStorage
@@ -155,9 +164,9 @@ export default function ReserveService({ params }) {
         return `${option.roomType} Room`;
       case 'car':
         return option.carModel;
-      case 'gym':
-        return option.membershipTypes;
-      case 'salon':
+      case "gym":
+        return `One ${option.membershipTypes} Pass`;
+      case "salon":
         return option.salonSpecialty;
       case 'flight':
         return `${option.flightClass} Class`;
@@ -409,11 +418,31 @@ export default function ReserveService({ params }) {
               {/* Quantity field */}
               {renderQuantityField()}
               
+              {service.type === "car" && (
+                <div className="flex items-center mb-3">
+                  <input
+                    type="checkbox"
+                    id="withDriver"
+                    checked={withDriver}
+                    onChange={handleCheckboxChange}
+                    className="mr-2"
+                  />
+                  <label htmlFor="withDriver" className="text-gray-700">
+                    With Driver (+5 QAR)
+                  </label>
+                </div>
+              )}
+
               {/* Display calculated total */}
               <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700">Total Price:</span>
-                  <span className="text-xl font-bold">QAR {totalPrice.toFixed(2)}</span>
+                 <span className="text-xl font-bold">
+                    QAR{" "}
+                    {withDriver
+                      ? (totalPrice + 5).toFixed(2)
+                      : totalPrice.toFixed(2)}
+                  </span>
                 </div>
               </div>
               

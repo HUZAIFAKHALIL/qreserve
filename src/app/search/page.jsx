@@ -134,7 +134,7 @@ export default function SearchService() {
               Location: {service.location}
             </p>
             <p className="text-sm text-gray-400">
-              Membership Type: {service.membershipTypes}
+              Membership Pass: {service.membershipTypes}
             </p>
             <p className="text-sm text-gray-400">
               Facilities: {service.gymFacilities}

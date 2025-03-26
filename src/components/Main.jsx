@@ -989,6 +989,7 @@ import { toast } from "react-toastify";
 import { Calendar, DollarSign, MapPin, User2, Briefcase, InboxIcon, Clock, CheckCircle, MessageSquare } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import AdminChatMonitoring from "./AdminChatMonitoring";
+import ImageSlider from "./ImageSlider";
 
 const MainPage = () => {
   const prefixURL = "/service";
@@ -1239,6 +1240,7 @@ const MainPage = () => {
 
   return (
     <div className="bg-white min-h-screen">
+      <ImageSlider />
       <div className="container mx-auto p-6">
         <h1 className="text-3xl font-bold text-center mb-8 text-black">
           Our Services
@@ -1283,14 +1285,20 @@ const MainPage = () => {
                 description="Explore exciting activities to do."
                 link={`${prefixURL}?serviceType=book-activity`}
               />
-              <ServiceCard
+               <ServiceCard
+                title="Restaurant"
+                imageSrc="/images/restaurant.jpg"
+                description="Find the perfect hotel for your stay with our curated selection of premium accommodations."
+                link={`${prefixURL}?serviceType=book-restaurant`}
+              />
+              {/* <ServiceCard
                 title="Flights"
                 imageSrc="/images/flight.jpg"
                 description="Explore the best flying options around you."
                 link={`${prefixURL}?serviceType=book-flight`}
-              />
+              /> */}
               <ServiceCard
-                title="Playgrounds"
+                title="Court"
                 imageSrc="/images/playground.jpg"
                 description="Book a playground for your kids."
                 link={`${prefixURL}?serviceType=book-playground`}

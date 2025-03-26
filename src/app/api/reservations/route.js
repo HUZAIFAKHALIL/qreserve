@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import nodemailer from "nodemailer";
+import { updateLoyaltyDiscount } from "@/utils/loyaltyDiscountManager";
 
 const prisma = new PrismaClient();
 
@@ -38,6 +39,7 @@ export async function POST(request) {
     // Parse the incoming request body
     const body = await request.json();
 
+    await updateLoyaltyDiscount(userId, totalPrice);
     // Extract the reservation details from the body
     const { status, userId, totalPrice, reservationItems, promotionId } = body;
 
@@ -108,23 +110,7 @@ export async function POST(request) {
           where: { id: signupDiscount.id },
           data: { isUsed: true },
         });
-      } else {
-        // Check for loyalty discount
-        const loyaltyDiscount = await prisma.loyaltyDiscount.findUnique({
-          where: { userId: userId },
-        });
-        
-        if (loyaltyDiscount) {
-          // Apply loyalty discount
-          if (loyaltyDiscount.discountType === "PERCENTAGE") {
-            appliedDiscountAmount = originalTotalPrice * (loyaltyDiscount.discount / 100);
-          } else { // FIXED discount
-            appliedDiscountAmount = loyaltyDiscount.discount;
-          }
-          
-          finalTotalPrice = Math.max(0, originalTotalPrice - appliedDiscountAmount);
-        }
-      }
+      } 
     }
 
     // Create a new reservation with the applied discount

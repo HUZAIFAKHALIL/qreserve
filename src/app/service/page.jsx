@@ -2,7 +2,27 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { notFound } from "next/navigation";
-import { BuildingIcon, UsersIcon, ScissorsIcon, TreePineIcon, PlaneIcon, PlayIcon, StarIcon, MapPinIcon, CalendarIcon, ClockIcon, WifiIcon, SchoolIcon as PoolIcon, DumbbellIcon, CoffeeIcon, UtensilsIcon, GamepadIcon, CheckCircleIcon, ArrowRightToLine, MessageCircleIcon } from 'lucide-react';
+import {
+  BuildingIcon,
+  UsersIcon,
+  ScissorsIcon,
+  TreePineIcon,
+  PlaneIcon,
+  PlayIcon,
+  StarIcon,
+  MapPinIcon,
+  CalendarIcon,
+  ClockIcon,
+  WifiIcon,
+  SchoolIcon as PoolIcon,
+  DumbbellIcon,
+  CoffeeIcon,
+  UtensilsIcon,
+  GamepadIcon,
+  CheckCircleIcon,
+  ArrowRightToLine,
+  MessageCircleIcon,
+} from "lucide-react";
 import data from "@/data/services.json";
 
 const serviceTypeToService = {
@@ -14,6 +34,7 @@ const serviceTypeToService = {
   "book-activity": "activity",
   "book-flight": "flight",
   "book-playground": "playground",
+  "book-restaurant": "restaurant",
 };
 
 export default function ServiceProducts() {
@@ -30,29 +51,36 @@ export default function ServiceProducts() {
     const serviceTypes = data.serviceTypes;
     if (serviceTypes.includes(serviceType)) {
       setIsValidServiceType(true);
-  
+
       setLoading(true);
       fetch(`/api/services?serviceType=${serviceType}`)
         .then((res) => res.json())
         .then((data) => {
           if (data) {
             console.log("data received is: ", data);
-            
-            // Fetch reviews for each service
+
             const servicesWithReviews = data.map(async (service) => {
               try {
-                const reviewsResponse = await fetch(`/api/reviews/service/${service.id}`);
+                const reviewsResponse = await fetch(
+                  `/api/reviews/service/${service.id}`
+                );
                 if (reviewsResponse.ok) {
-                  const reviews = await reviewsResponse.json();
-                  return { ...service, reviews };
+                  const reviewsData = await reviewsResponse.json();
+                  return { 
+                    ...service, 
+                    reviews: reviewsData  // Store the entire reviews object
+                  };
                 }
                 return service;
               } catch (error) {
-                console.error(`Error fetching reviews for service ${service.id}:`, error);
+                console.error(
+                  `Error fetching reviews for service ${service.id}:`,
+                  error
+                );
                 return service;
               }
             });
-            
+
             Promise.all(servicesWithReviews).then((updatedServices) => {
               setServices(updatedServices);
               setLoading(false);
@@ -69,24 +97,26 @@ export default function ServiceProducts() {
       notFound();
     }
   }, [serviceType]);
- 
+
   const getServiceIcon = (type) => {
     switch (type.toLowerCase()) {
-      case 'hotel':
+      case "hotel":
         return <BuildingIcon className="w-5 h-5" />;
-      case 'car':
+      case "car":
         return <UsersIcon className="w-5 h-5" />;
-      case 'gym':
+      case "gym":
         return <DumbbellIcon className="w-5 h-5" />;
-      case 'salon':
+      case "salon":
         return <ScissorsIcon className="w-5 h-5" />;
-      case 'hall':
+      case "hall":
         return <BuildingIcon className="w-5 h-5" />;
-      case 'activity':
+      case "activity":
         return <TreePineIcon className="w-5 h-5" />;
-      case 'flight':
+      case "flight":
         return <PlaneIcon className="w-5 h-5" />;
-      case 'playground':
+      case "restaurant":
+        return <UtensilsIcon className="w-5 h-5" />;
+      case "playground":
         return <PlayIcon className="w-5 h-5" />;
       default:
         return <StarIcon className="w-5 h-5" />;
@@ -94,50 +124,48 @@ export default function ServiceProducts() {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getLowestPrice = (service) => {
     if (service.specificService && service.specificService.length > 0) {
-      const prices = service.specificService.map(item => item.price || 0);
+      const prices = service.specificService.map((item) => item.price || 0);
       return Math.min(...prices);
     }
-    return service.price || 'N/A';
+    return service.price || "N/A";
   };
 
   const getFeatureIcon = (feature, type) => {
     const featureLower = feature.toLowerCase().trim();
     switch (featureLower) {
-      case 'wifi':
+      case "wifi":
         return <WifiIcon className="w-3 h-3" />;
-      case 'pool':
+      case "pool":
         return <PoolIcon className="w-3 h-3" />;
-      case 'gym':
+      case "gym":
         return <DumbbellIcon className="w-3 h-3" />;
-      case 'restaurant':
+      case "restaurant":
         return <UtensilsIcon className="w-3 h-3" />;
-      case 'coffee':
+      case "coffee":
         return <CoffeeIcon className="w-3 h-3" />;
-      case 'games':
+      case "games":
         return <GamepadIcon className="w-3 h-3" />;
       default:
         return <CheckCircleIcon className="w-3 h-3" />;
     }
   };
 
-
-  
   const renderServiceDetails = (service) => {
     switch (service.type) {
       case "hotel":
         return (
-          <div className="space-y-3"> 
+          <div className="space-y-3">
             <div className="flex items-center gap-2">
               <MapPinIcon className="w-4 h-4 text-gray-400" />
               <p className="text-sm text-gray-600">{service.location}</p>
@@ -147,12 +175,18 @@ export default function ServiceProducts() {
                 {service.specificService.map((room, idx) => (
                   <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium capitalize">{room.roomType} Room</span>
-                      <span className="text-sm font-semibold">QAR {room.price}</span>
+                      <span className="font-medium capitalize">
+                        {room.roomType} Room
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {room.price}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
                       <BuildingIcon className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{room.noOfRooms} rooms available</span>
+                      <span className="text-sm text-gray-600">
+                        {room.noOfRooms} rooms available
+                      </span>
                     </div>
                     <div className="flex items-center gap-1 mb-2">
                       {[...Array(room.hotelStars)].map((_, i) => (
@@ -161,9 +195,12 @@ export default function ServiceProducts() {
                     </div>
                     {room.amenities && (
                       <div className="flex flex-wrap gap-2">
-                        {room.amenities.split(',').map((amenity, idx) => (
-                          <span key={idx} className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600">
-                            {getFeatureIcon(amenity, 'hotel')}
+                        {room.amenities.split(",").map((amenity, idx) => (
+                          <span
+                            key={idx}
+                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                          >
+                            {getFeatureIcon(amenity, "hotel")}
                             {amenity.trim()}
                           </span>
                         ))}
@@ -176,8 +213,380 @@ export default function ServiceProducts() {
           </div>
         );
 
-      // Other service type cases remain the same as in your original code
-      // ...
+      case "car":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{service.location}</p>
+            </div>
+            {service.specificService && service.specificService.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {service.specificService.map((car, idx) => (
+                  <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium capitalize">
+                        {car.carModel}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {car.price}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-2">
+                        <UsersIcon className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">
+                          {car.carCapacity} passengers
+                        </span>
+                      </div>
+                      {/* <div className="flex items-center gap-2">
+                          <ClockIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">{car.rentalDuration}h</span>
+                        </div> */}
+                    </div>
+                    {car.features && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {car.features.split(",").map((feature, idx) => (
+                          <span
+                            key={idx}
+                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                          >
+                            {getFeatureIcon(feature, "car")}
+                            {feature.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "gym":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{service.location}</p>
+            </div>
+            {service.specificService && service.specificService.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {service.specificService.map((membership, idx) => (
+                  <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium capitalize">
+                        {membership.membershipType}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {membership.price}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <ClockIcon className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {membership.operatingHours}
+                      </span>
+                    </div>
+                    {membership.gymFacilities && (
+                      <div className="flex flex-wrap gap-2">
+                        {membership.gymFacilities
+                          .split(",")
+                          .map((facility, idx) => (
+                            <span
+                              key={idx}
+                              className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                            >
+                              {getFeatureIcon(facility, "gym")}
+                              {facility.trim()}
+                            </span>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "salon":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{service.location}</p>
+            </div>
+            {service.specificService && service.specificService.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {service.specificService.map((salonService, idx) => (
+                  <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium capitalize">
+                        {salonService.serviceType}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {salonService.price}
+                      </span>
+                    </div>
+                    {/* <div className="flex items-center gap-2 mb-2">
+                        <ClockIcon className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">{salonService.duration} minutes</span>
+                      </div> */}
+                    {salonService.salonSpecialty && (
+                      <div className="flex flex-wrap gap-2">
+                        {salonService.salonSpecialty
+                          .split(",")
+                          .map((specialty, idx) => (
+                            <span
+                              key={idx}
+                              className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                            >
+                              {getFeatureIcon(specialty, "salon")}
+                              {specialty.trim()}
+                            </span>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "flight":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <PlaneIcon className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">
+                {service.route || service.location}
+              </p>
+            </div>
+            {service.specificService && service.specificService.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {service.specificService.map((flight, idx) => (
+                  <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium capitalize">
+                        {flight.flightClass} Class
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {flight.price}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-2">
+                        <PlaneIcon className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">
+                          Flight Name: {flight.airlineName}
+                        </span>
+                      </div>
+                      {/* <div className="flex items-center gap-2">
+                          <CalendarIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            Arrival: {formatDate(flight.arrivalTime)}
+                          </span>
+                        </div> */}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "hall":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{service.location}</p>
+            </div>
+            {service.specificService && service.specificService.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {service.specificService.map((hall, idx) => (
+                  <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium capitalize">
+                        {hall.hallType}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {hall.price}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <UsersIcon className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        Capacity: {hall.hallCapacity} people
+                      </span>
+                    </div>
+                    {hall.features && (
+                      <div className="flex flex-wrap gap-2">
+                        {hall.features.split(",").map((feature, idx) => (
+                          <span
+                            key={idx}
+                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                          >
+                            {getFeatureIcon(feature, "hall")}
+                            {feature.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+        
+        case "Restaurant":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{service.location}</p>
+            </div>
+            {service.specificService && service.specificService.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {service.specificService.map((hall, idx) => (
+                  <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium capitalize">
+                        {hall.hallType}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {hall.price}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <UsersIcon className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        Capacity: {hall.hallCapacity} people
+                      </span>
+                    </div>
+                    {hall.features && (
+                      <div className="flex flex-wrap gap-2">
+                        {hall.features.split(",").map((feature, idx) => (
+                          <span
+                            key={idx}
+                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                          >
+                            {getFeatureIcon(feature, "hall")}
+                            {feature.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "activity":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{service.location}</p>
+            </div>
+            {service.specificService && service.specificService.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {service.specificService.map((activity, idx) => (
+                  <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium capitalize">
+                        {activity.activityName}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {activity.price}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <TreePineIcon className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {activity.activityType}
+                      </span>
+                    </div>
+                    {activity.features && (
+                      <div className="flex flex-wrap gap-2">
+                        {activity.features.split(",").map((feature, idx) => (
+                          <span
+                            key={idx}
+                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                          >
+                            {getFeatureIcon(feature, "activity")}
+                            {feature.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+
+      case "playground":
+        return (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="w-4 h-4 text-gray-400" />
+              <p className="text-sm text-gray-600">{service.location}</p>
+            </div>
+            {service.specificService && service.specificService.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {service.specificService.map((playground, idx) => (
+                  <div key={idx} className="w-full p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium capitalize">
+                        {playground.playgroundName}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        QAR {playground.price}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex items-center gap-2">
+                        <PlayIcon className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">
+                          {playground.playgroundType}
+                        </span>
+                      </div>
+                      {playground.ageRange && (
+                        <div className="flex items-center gap-2">
+                          <UsersIcon className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            Ages: {playground.ageRange}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {playground.features && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {playground.features.split(",").map((feature, idx) => (
+                          <span
+                            key={idx}
+                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-600"
+                          >
+                            {getFeatureIcon(feature, "playground")}
+                            {feature.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
 
       default:
         return (
@@ -201,15 +610,22 @@ export default function ServiceProducts() {
 
   // New function to render service reviews
   const renderReviews = (service) => {
-    if (!service.reviews || service.reviews.length === 0) {
-      return null;
+    // Check if reviews exist and have content
+    const reviews = service.reviews?.reviews || [];
+  
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="mt-4 border-t pt-4 text-gray-500 text-center">
+          No reviews available for this service yet.
+        </div>
+      );
     }
   
     return (
       <div className="mt-4 border-t pt-4">
         <h4 className="text-lg font-medium mb-2">Reviews</h4>
         <div className="space-y-3">
-          {service.reviews.map((review) => (
+          {reviews.map((review) => (
             <div key={review.id} className="bg-gray-50 p-3 rounded-lg">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1">
@@ -222,7 +638,14 @@ export default function ServiceProducts() {
                   {new Date(review.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              <p className="text-sm text-gray-700">{review.comment}</p>
+              <div className="flex justify-between items-start">
+                <p className="text-sm text-gray-700 flex-grow mr-2">{review.comment}</p>
+                {review.user && (
+                  <span className="text-xs text-gray-500">
+                    - {review.user.name}
+                  </span>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -254,55 +677,59 @@ export default function ServiceProducts() {
             {getServiceIcon(serviceType)}
           </div>
           <h1 className="text-3xl font-bold">
-            {serviceType.charAt(0).toUpperCase() + serviceType.slice(1)} Services
+            {serviceType.charAt(0).toUpperCase() + serviceType.slice(1)}{" "}
+            Services
           </h1>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.isArray(services) && services.map((service) => (
-  <div
-    key={service.id}
-    className="bg-white rounded-xl shadow-lg overflow-hidden transition-all hover:shadow-xl hover:scale-[1.02]"
-  >
-    <img
-      src={`/images/${serviceType}.jpg`}
-      alt={service.name}
-      className="w-full h-48 object-cover"
-      onError={(e) => (e.target.src = "/fallback-image.jpg")}
-    />
-    
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold">{service.name}</h3>
-        <div className="flex items-center gap-1">
-          <StarIcon className="w-4 h-4 text-yellow-400" />
-          <span className="font-medium">{service.rating}</span>
-        </div>
-      </div>
+          {Array.isArray(services) &&
+            services.map((service) => (
+              <div
+                key={service.id}
+                className="bg-white rounded-xl shadow-lg overflow-hidden transition-all hover:shadow-xl hover:scale-[1.02]"
+              >
+                <img
+                  src={`/images/${serviceType}.jpg`}
+                  alt={service.name}
+                  className="w-full h-48 object-cover"
+                  onError={(e) => (e.target.src = "/fallback-image.jpg")}
+                />
 
-      <p className="text-gray-600 mb-4 line-clamp-2">{service.description}</p>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold">{service.name}</h3>
+                    <div className="flex items-center gap-1">
+                      <StarIcon className="w-4 h-4 text-yellow-400" />
+                      <span className="font-medium">{service.rating}</span>
+                    </div>
+                  </div>
 
-      {renderServiceDetails(service)}
-      
-      {/* Add the reviews section here */}
-      {renderReviews(service)}
+                  <p className="text-gray-600 mb-4 line-clamp-2">
+                    {service.description}
+                  </p>
 
-      <div className="mt-6 flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <span className="text-sm text-gray-500">From</span>
-          <span className="text-lg font-bold">QAR {getLowestPrice(service)}</span>
-        </div>
-        <button
-          onClick={() => router.push(`/reserve/${service.id}`)}
-          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          Reserve Now
-        </button>
-      </div>
-    </div>
-  </div>
-))}
-         
+                  {renderServiceDetails(service)}
+
+                  {renderReviews(service)}
+
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm text-gray-500">From</span>
+                      <span className="text-lg font-bold">
+                        QAR {getLowestPrice(service)}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => router.push(`/reserve/${service.id}`)}
+                      className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+                    >
+                      Reserve Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
         </div>
       </div>
     </div>

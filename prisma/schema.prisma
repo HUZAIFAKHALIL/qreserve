@@ -20,40 +20,40 @@ model Promotion {
   id           Int           @id @default(autoincrement())
   title        String
   description  String?
-  discount     Float // Discount percentage or fixed amount
-  discountType DiscountType // ENUM: PERCENTAGE or FIXED
+  discount     Float
+  discountType DiscountType
   isActive     Boolean       @default(true)
   startDate    DateTime?
   endDate      DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
-  serviceId    Int? // If null, applies to all services
+  serviceId    Int?
   service      Service?      @relation(fields: [serviceId], references: [id])
   reservations Reservation[]
 }
 
-model LoyaltyDiscount {
-  id           Int          @id @default(autoincrement())
-  userId       Int          @unique
-  discount     Float // Discount percentage or fixed amount
-  discountType DiscountType
-  threshold    Int // Number of reservations required
-  user         User         @relation(fields: [userId], references: [id])
-}
+  model LoyaltyDiscount {
+    id           Int          @id @default(autoincrement())
+    userId       Int          @unique
+    discount     Float        @default(0)
+    discountType DiscountType @default(PERCENTAGE)
+    totalSpent   Float        @default(0)
+    nextTierSpent Float       @default(100)
+    maxDiscount  Float        @default(25)
+    isUsed       Boolean      @default(false)
+    createdAt    DateTime     @default(now())
+    updatedAt    DateTime     @updatedAt
+    user         User         @relation(fields: [userId], references: [id])
+  }
 
 model SignupDiscount {
   id           Int          @id @default(autoincrement())
   userId       Int          @unique
-  discount     Float // Fixed discount amount
+  discount     Float
   discountType DiscountType
   isUsed       Boolean      @default(false)
   createdAt    DateTime     @default(now())
   user         User         @relation(fields: [userId], references: [id])
-}
-
-enum DiscountType {
-  PERCENTAGE
-  FIXED
 }
 
 model User {
@@ -71,13 +71,13 @@ model User {
   role                 UserRole               @default(BUYER)
   chatMessages         ChatMessage[]
   CompletedReservation CompletedReservation[]
+  loyaltyDiscount      LoyaltyDiscount?
   receivedRequests     PartnerRequest[]       @relation("ReceivedRequests")
   sentRequests         PartnerRequest[]       @relation("SentRequests")
   Payment              Payment[]
   reservations         Reservation[]
   Review               Review[]
   services             Service[]
-  loyaltyDiscount      LoyaltyDiscount?
   signupDiscount       SignupDiscount?
 }
 
@@ -99,9 +99,10 @@ model Service {
   hallServices       HallService[]
   hotelServices      HotelService[]
   playgroundServices PlaygroundService[]
-  ReservationItem    ReservationItem[]
-  Review             Review[]
   promotions         Promotion[]
+  ReservationItem    ReservationItem[]
+  RestaurantService  RestaurantService[]
+  Review             Review[]
   salonServices      SalonService[]
   seller             User                @relation(fields: [sellerId], references: [id])
 }
@@ -112,6 +113,18 @@ model SalonService {
   salonSpecialty String
   price          Float
   service        Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model RestaurantService {
+  id             Int          @id @default(autoincrement())
+  serviceId      Int
+  diningOption   DiningOption
+  numPersons     Int
+  seatsAvailable Int
+  price          Float
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
 
 model HotelService {
@@ -188,11 +201,11 @@ model Reservation {
   status             String
   totalPrice         Float
   createdAt          DateTime          @default(now())
-  updatedAt          DateTime              @default(now()) @updatedAt
+  updatedAt          DateTime          @default(now()) @updatedAt
+  appliedPromotionId Int?
+  appliedPromotion   Promotion?        @relation(fields: [appliedPromotionId], references: [id])
   user               User              @relation(fields: [userId], references: [id])
   reservationItems   ReservationItem[]
-  appliedPromotionId Int? // Links to a promotion, if applicable
-  appliedPromotion   Promotion?        @relation(fields: [appliedPromotionId], references: [id])
 }
 
 model ReservationItem {
@@ -202,10 +215,10 @@ model ReservationItem {
   price                Float
   startTime            DateTime
   endTime              DateTime
-  updatedAt            DateTime              @db.Timestamptz
   modifiedAt           DateTime?
   editable             Boolean               @default(true)
   userId               String?
+  updatedAt            DateTime              @db.Timestamptz(6)
   CompletedReservation CompletedReservation?
   PartnerRequest       PartnerRequest[]
   Payment              Payment?
@@ -257,6 +270,16 @@ model Review {
   createdAt DateTime @default(now())
   Service   Service  @relation(fields: [serviceId], references: [id])
   User      User     @relation(fields: [userId], references: [id])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+enum DiningOption {
+  INDOOR
+  OUTDOOR
 }
 
 enum UserRole {

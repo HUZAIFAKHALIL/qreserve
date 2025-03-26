@@ -4,7 +4,7 @@ import { useAuth } from "@/PrivateRoute/auth";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { CalendarIcon, Clock, DollarSign, Edit2Icon, Trash2Icon, UserPlusIcon } from "lucide-react";
+import { CalendarIcon, Clock, Coins, DollarSign, Edit2Icon, Trash2Icon, UserPlusIcon } from "lucide-react";
 import { format } from "date-fns";
 
 export default function ConfirmedReservations() {
@@ -226,8 +226,8 @@ export default function ConfirmedReservations() {
                           {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
                         </span>
                         <div className="flex items-center text-gray-600">
-                          <DollarSign className="h-4 w-4 mr-2" />
-                          <span>${reservation.totalPrice.toFixed(2)}</span>
+                          <Coins className="h-4 w-4 mr-2" />
+                          <span>QAR {reservation.totalPrice.toFixed(2)}</span>
                         </div>
                         <div className="flex items-center text-gray-600">
                           <Clock className="h-4 w-4 mr-2" />
@@ -269,8 +269,8 @@ export default function ConfirmedReservations() {
                             Service #{item.serviceId}
                           </h3>
                           <div className="flex items-center text-gray-600">
-                            <DollarSign className="h-4 w-4 mr-2" />
-                            <span>${item.price.toFixed(2)}</span>
+                            <Coins className="h-4 w-4 mr-2" />
+                            <span>QAR{item.price.toFixed(2)}</span>
                           </div>
                           <div className="flex items-center text-gray-600">
                             <CalendarIcon className="h-4 w-4 mr-2" />

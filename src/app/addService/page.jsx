@@ -23,6 +23,7 @@ const serviceTypes = [
   "activity",
   "playground",
   "flight",
+  "restaurant"
 ];
 
 export default function CreateServiceForm() {
@@ -48,6 +49,7 @@ export default function CreateServiceForm() {
   const [activityRows, setActivityRows] = useState([]);
   const [flightRows, setFlightRows] = useState([]);
   const [playgroundRows, setPlaygroundRows] = useState([]);
+  const [restaurantRows, setRestaurantRows] = useState([]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -113,6 +115,12 @@ export default function CreateServiceForm() {
           { playgroundType: "", ageGroup: "", equipment: "", price: "" },
         ]);
         break;
+      case "restaurant":
+        setRestaurantRows([
+          ...restaurantRows,
+          { diningOption: "", numPersons: "", seatsAvailable: "", price: "" },
+          ]);
+        break;
       default:
         break;
     }
@@ -144,6 +152,9 @@ export default function CreateServiceForm() {
         break;
       case "playground":
         setPlaygroundRows(playgroundRows.filter((_, i) => i !== index));
+        break;
+      case "restaurant":
+        setRestaurantRows(restaurantRows.filter((_, i) => i !== index));
         break;
       default:
         break;
@@ -209,6 +220,13 @@ export default function CreateServiceForm() {
           )
         );
         break;
+      case "restaurant":
+        setRestaurantRows(
+          restaurantRows.map((row, i) =>
+            i === index ? { ...row, [field]: value } : row
+          )
+        );
+      break;
       default:
         break;
     }
@@ -301,6 +319,14 @@ export default function CreateServiceForm() {
             price: parseFloat(row.price) || 0,
           }));
           break;
+        case "restaurant":
+          specificServicePayloads = restaurantRows.map((row) => ({
+            diningOption: row.diningOption,
+            numPersons: row.numPersons ? parseInt(row.numPersons) : 0,
+            seatsAvailable: row.seatsAvailable ? parseInt(row.seatsAvailable) : 0,
+            price: parseFloat(row.price) || 0,
+          }));
+          break;  
         default:
           break;
       }
@@ -459,6 +485,131 @@ export default function CreateServiceForm() {
       )}
     </button>
   );
+
+  const renderRestaurantFields = () => (
+    <div className="space-y-4 border-t pt-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold">Restaurant Services</h3>
+        <button
+          type="button"
+          onClick={() => addServiceRow("restaurant")}
+          className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors"
+        >
+          <PlusIcon className="w-5 h-5" />
+          Add Dining Option
+        </button>
+      </div>
+  
+      {restaurantRows.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-50">
+                <th className="border px-4 py-2 text-left">Dining Option</th>
+                <th className="border px-4 py-2 text-left">Max Persons</th>
+                <th className="border px-4 py-2 text-left">Seats Available</th>
+                <th className="border px-4 py-2 text-left">Price</th>
+                <th className="border px-4 py-2 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {restaurantRows.map((row, index) => (
+                <tr key={index}>
+                  <td className="border px-4 py-2">
+                    <select
+                      value={row.diningOption}
+                      onChange={(e) =>
+                        updateRowField(
+                          "restaurant",
+                          index,
+                          "diningOption",
+                          e.target.value
+                        )
+                      }
+                      className="w-full p-1 border rounded"
+                      required
+                    >
+                      <option value="" disabled>
+                        Select option
+                      </option>
+                      <option value="INDOOR">Indoor</option>
+                      <option value="OUTDOOR">Outdoor</option>
+                    </select>
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="number"
+                      value={row.numPersons}
+                      onChange={(e) =>
+                        updateRowField(
+                          "restaurant",
+                          index,
+                          "numPersons",
+                          e.target.value
+                        )
+                      }
+                      className="w-full p-1 border rounded"
+                      placeholder="Max number of people"
+                      min="1"
+                      required
+                    />
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="number"
+                      value={row.seatsAvailable}
+                      onChange={(e) =>
+                        updateRowField(
+                          "restaurant",
+                          index,
+                          "seatsAvailable",
+                          e.target.value
+                        )
+                      }
+                      className="w-full p-1 border rounded"
+                      placeholder="Number of available seats"
+                      min="0"
+                      required
+                    />
+                  </td>
+                  <td className="border px-4 py-2">
+                    <input
+                      type="number"
+                      value={row.price}
+                      onChange={(e) =>
+                        updateRowField("restaurant", index, "price", e.target.value)
+                      }
+                      className="w-full p-1 border rounded"
+                      placeholder="0.00"
+                      min="0"
+                      step="0.01"
+                      required
+                    />
+                  </td>
+                  <td className="border px-4 py-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => removeServiceRow("restaurant", index)}
+                      className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-center py-4 bg-gray-50 rounded-md">
+          <p className="text-gray-500">
+            No restaurant services added yet. Click the button above to add one.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+  
 
   const renderHotelFields = () => (
     <div className="space-y-4 border-t pt-4">
@@ -725,7 +876,7 @@ export default function CreateServiceForm() {
             <thead>
               <tr className="bg-gray-50">
                 <th className="border px-4 py-2 text-left">Facilities</th>
-                <th className="border px-4 py-2 text-left">Membership Types</th>
+                <th className="border px-4 py-2 text-left">Membership Pass</th>
                 <th className="border px-4 py-2 text-left">Operating Hours</th>
                 <th className="border px-4 py-2 text-left">Price</th>
                 <th className="border px-4 py-2 text-center">Actions</th>
@@ -752,7 +903,8 @@ export default function CreateServiceForm() {
                     />
                   </td>
                   <td className="border px-4 py-2">
-                    <input
+                     <select
+                      name="membershipTypes"
                       type="text"
                       value={row.membershipTypes}
                       onChange={(e) =>
@@ -766,7 +918,14 @@ export default function CreateServiceForm() {
                       className="w-full p-1 border rounded"
                       placeholder="Basic, Premium, etc."
                       required
-                    />
+                      >
+                      <option value="" disabled selected>
+                        Select pass
+                      </option>
+                      <option value="Day">One Day</option>
+                      <option value="Month">One Month</option>
+                      <option value="Year">One Year</option>
+                    </select>
                   </td>
                   <td className="border px-4 py-2">
                     <input
@@ -1352,6 +1511,8 @@ export default function CreateServiceForm() {
         return renderPlaygroundFields();
       case "flight":
         return renderFlightFields();
+      case "restaurant":
+        return renderRestaurantFields();
       default:
         return null;
     }
