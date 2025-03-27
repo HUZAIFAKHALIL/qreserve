@@ -1,5 +1,6 @@
 // src\app\api\services\route.js
 import { PrismaClient } from "@prisma/client";
+import nodemailer from 'nodemailer';
 
 const prisma = new PrismaClient();
 
@@ -95,6 +96,113 @@ export async function GET(request) {
         headers: { "Content-Type": "application/json" },
       }
     );
+  }
+}
+
+async function sendServiceCreationEmail(service) {
+  // Create transporter
+  const transporter = nodemailer.createTransport({
+    service: "Gmail",
+    auth: {
+      user: process.env.SMTP_EMAIL,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  });
+
+  // Check if sellerId exists and is valid
+  if (!service.sellerId) {
+    console.error("No seller ID provided");
+    return;
+  }
+
+  try {
+    // Attempt to find seller information
+    // Note: You'll need to adjust this based on your actual Prisma schema
+    const seller = await prisma.user.findUnique({
+      where: { id: service.sellerId },
+      select: { email: true, name: true }
+    });
+
+    // If no seller found, use a fallback email
+    if (!seller || !seller.email) {
+      console.warn(`No email found for seller ID: ${service.sellerId}`);
+      
+      // Fallback email options
+      const mailOptions = {
+        from: "no-reply@qreserve.com",
+        to: "support@qreserve.com", // Fallback email
+        subject: "Service Submission Without Seller Email",
+        text: `A service was submitted without a valid seller email.
+        
+Service Details:
+- ID: ${service.id}
+- Type: ${service.type}
+- Name: ${service.name}
+- Seller ID: ${service.sellerId}`
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+      } catch (fallbackError) {
+        console.error("Error sending fallback email:", fallbackError);
+      }
+      
+      return;
+    }
+
+    // Prepare email options
+    const mailOptions = {
+      from: "no-reply@qreserve.com",
+      to: seller.email,
+      cc: "huzaifa.hado@gmail.com",
+      subject: "Service Submission Confirmation",
+      text: `Dear ${seller.name || 'Seller'},
+
+Your service "${service.name}" has been submitted successfully and is currently pending admin approval.
+
+Service Details:
+- Type: ${service.type}
+- Name: ${service.name}
+- Location: ${service.location || 'Not specified'}
+
+Status: Waiting for Admin Review
+
+Our team will review your service and notify you once it is approved or if any changes are required.
+
+Thank you for using QReserve!
+
+Best regards,
+QReserve Team`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Service Submission Confirmation</h2>
+          <p>Dear ${seller.name || 'Seller'},</p>
+          <p>Your service "${service.name}" has been submitted successfully and is currently pending admin approval.</p>
+          
+          <h3>Service Details:</h3>
+          <ul>
+            <li><strong>Type:</strong> ${service.type}</li>
+            <li><strong>Name:</strong> ${service.name}</li>
+            <li><strong>Location:</strong> ${service.location || 'Not specified'}</li>
+          </ul>
+          
+          <p><strong>Status:</strong> Waiting for Admin Review</p>
+          
+          <p>Our team will review your service and notify you once it is approved or if any changes are required.</p>
+          
+          <p>Thank you for using QReserve!</p>
+          
+          <p>Best regards,<br>QReserve Team</p>
+        </div>
+      `
+    };
+
+    // Send email
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${seller.email} for service ${service.name}`);
+
+  } catch (error) {
+    console.error("Error in sendServiceCreationEmail:", error);
   }
 }
 
@@ -244,6 +352,9 @@ export async function POST(request) {
       }
     }
 
+    sendServiceCreationEmail(newService).catch(console.error);
+
+    
     return new Response(
       JSON.stringify({
         message: "Service created successfully",

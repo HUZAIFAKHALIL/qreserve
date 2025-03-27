@@ -33,7 +33,6 @@ const LoyaltyDiscountBadge = () => {
     fetchLoyaltyDiscount();
   }, []);
 
-  // Check if loading, no discount, or discount has been used
   if (
     isLoading || 
     !discountData?.currentDiscount?.discount || 

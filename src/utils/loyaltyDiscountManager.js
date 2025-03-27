@@ -1,8 +1,6 @@
-// src\utils\loyaltyDiscountManager.js
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
-
 export async function updateLoyaltyDiscount(userId, reservationAmount) {
   try {
     // Find or create loyalty discount record
@@ -17,30 +15,39 @@ export async function updateLoyaltyDiscount(userId, reservationAmount) {
           userId,
           totalSpent: reservationAmount,
           discount: calculateDiscount(reservationAmount),
-          nextTierSpent: calculateNextTierThreshold(reservationAmount)
+          nextTierSpent: calculateNextTierThreshold(reservationAmount),
+          isUsed: false  // Explicitly set isUsed to false
         }
       });
     } else {
-      // If the current discount is already used, don't modify it
+      // If the current discount was used, reset total spent and recalculate
       if (loyaltyDiscount.isUsed) {
-        return loyaltyDiscount;
+        const newTotalSpent = reservationAmount;
+        const newDiscount = calculateDiscount(newTotalSpent);
+        
+        loyaltyDiscount = await prisma.loyaltyDiscount.update({
+          where: { userId },
+          data: {
+            totalSpent: newTotalSpent,
+            discount: newDiscount,
+            nextTierSpent: calculateNextTierThreshold(newTotalSpent),
+            isUsed: false  // Reset isUsed to false
+          }
+        });
+      } else {
+        // Update total spent normally
+        const newTotalSpent = loyaltyDiscount.totalSpent + reservationAmount;
+        const newDiscount = calculateDiscount(newTotalSpent);
+        
+        loyaltyDiscount = await prisma.loyaltyDiscount.update({
+          where: { userId },
+          data: {
+            totalSpent: newTotalSpent,
+            discount: newDiscount,
+            nextTierSpent: calculateNextTierThreshold(newTotalSpent)
+          }
+        });
       }
-
-      // Update total spent
-      const newTotalSpent = loyaltyDiscount.totalSpent + reservationAmount;
-      
-      // Calculate new discount
-      const newDiscount = calculateDiscount(newTotalSpent);
-      
-      // Update loyalty discount record
-      loyaltyDiscount = await prisma.loyaltyDiscount.update({
-        where: { userId },
-        data: {
-          totalSpent: newTotalSpent,
-          discount: newDiscount,
-          nextTierSpent: calculateNextTierThreshold(newTotalSpent)
-        }
-      });
     }
 
     return loyaltyDiscount;
