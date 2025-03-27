@@ -18,7 +18,8 @@ import {
     MailIcon,
     CheckCircleIcon,
     UtensilsIcon,
-    SaladIcon
+    SaladIcon,
+    XCircleIcon
 } from 'lucide-react';
 
 const ServiceDetail = () => {
@@ -87,11 +88,53 @@ const ServiceDetail = () => {
       // Refresh service data after approval
       const data = await response.json();
       console.log("data", data);
-      setService({...service,isApproved:true});
+      setService({...service,isApproved:true , isRejected: false });
     } catch (err) {
       console.error('Error approving service:', err);
     }
   };
+
+  const handleRejectService = async () => {
+    
+    const confirmReject = window.confirm(
+      "Are you sure you want to reject this service? This action cannot be undone."
+    );
+  
+    if (!confirmReject) return;
+  
+    try {
+      const response = await fetch(`/api/services/${serviceID}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to reject service. Status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log("Service rejection response:", data);
+  
+      setService({
+        ...service, 
+        isApproved: false,
+        isRejected: true 
+      });
+  
+      // Optional: Show a success notification to the user
+      // You could use a toast library or custom notification system
+      alert("Service has been successfully rejected.");
+  
+    } catch (error) {
+      // Log the detailed error
+      console.error('Error rejecting service:', error);
+  
+      // Optional: Show an error message to the user
+      alert(`Failed to reject service: ${error.message}`);
+    }
+  };
+
 
   const renderHotelDetails = () => (
     <div className="space-y-4 border-t pt-4">
@@ -521,14 +564,23 @@ const ServiceDetail = () => {
           </div>
         </div>
 
-        {!service.isApproved && (
-          <button
-            onClick={handleApproveService}
-            className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <CheckCircleIcon className="w-5 h-5" />
-            Approve Service
-          </button>
+        {!service.isApproved && !service.isRejected && (
+          <div className="flex justify-between gap-4 mt-4">
+            <button
+              onClick={handleApproveService}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <CheckCircleIcon className="w-5 h-5" />
+              Approve Service
+            </button>
+            <button
+              onClick={handleRejectService}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <XCircleIcon className="w-5 h-5" />
+              Reject Service
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -654,10 +706,22 @@ const ServiceDetail = () => {
 
             {/* Service Status Badge */}
             <div className="flex items-center">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${service.isApproved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                {service.isApproved ? 'Approved' : 'Pending Approval'}
-              </span>
-            </div>
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                service.isApproved && !service.isRejected
+                  ? 'bg-green-100 text-green-800' // Approved
+                  : service.isRejected && !service.isApproved
+                  ? 'bg-red-100 text-red-800' // Rejected
+                  : 'bg-yellow-100 text-yellow-800' // Pending Approval
+              }`}
+            >
+              {service.isApproved && !service.isRejected
+                ? 'Approved'
+                : service.isRejected && !service.isApproved
+                ? 'Rejected'
+                : 'Pending Approval'}
+            </span>
+          </div>
 
             {/* Availability */}
             {service.availableStartTime && service.availableEndTime && (

@@ -1,10 +1,11 @@
+// src\app\checkout\page.jsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { getUserDiscounts , markDiscountsAsUsed , calculateDiscountedPrice } from "@/utils/discountCalculator";
+import { getUserDiscounts, markDiscountsAsUsed, calculateDiscountedPrice } from "@/utils/discountCalculator";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
@@ -23,15 +24,14 @@ function StripeCheckout() {
   const [error, setError] = useState("");
   const [processing, setProcessing] = useState(false);
   const [discounts, setDiscounts] = useState(null);
-  const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
+  const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(true);
+  const [signupDiscountData, setSignupDiscountData] = useState(null);
   const [priceDetails, setPriceDetails] = useState({
     originalPrice: 0,
     finalPrice: 0,
     totalDiscount: 0,
     appliedDiscounts: []
   });
-  const [selectedPromotion, setSelectedPromotion] = useState(null);
-  const [promotions, setPromotions] = useState([]);
   const [userId, setUserId] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   
@@ -76,6 +76,12 @@ function StripeCheckout() {
       }
       const data = await response.json();
       setDiscounts(data);
+      
+      // Set signup discount data if available
+      if (data.signupDiscount) {
+        setSignupDiscountData(data.signupDiscount);
+      }
+      
       return data;
     } catch (error) {
       console.error("Error fetching discounts:", error);
@@ -83,21 +89,50 @@ function StripeCheckout() {
     }
   };
 
-  // Fetch available promotions
-  const fetchPromotions = async () => {
-    try {
-      const response = await fetch("/api/promotions?activeOnly=true");
-      if (!response.ok) {
-        throw new Error("Failed to fetch promotions");
-      }
-      const data = await response.json();
-      setPromotions(data.promotions);
-    } catch (error) {
-      console.error("Error fetching promotions:", error);
-    }
-  };
-
   // Initial data fetching
+  // useEffect(() => {
+  //   const storedUserEmail = localStorage.getItem("userEmail");
+  //   const storedUserId = localStorage.getItem("userId");
+    
+  //   if (!storedUserEmail || !storedUserId) {
+  //     router.push("/login");
+  //     return;
+  //   }
+
+  //   setUserEmail(storedUserEmail);
+  //   setUserId(storedUserId);
+
+  //   const fetchData = async () => {
+  //     // Fetch loyalty discount details
+  //     await fetchLoyaltyDiscountDetails(storedUserId);
+
+  //     // Fetch discounts
+  //     const discountData = await fetchUserDiscounts(storedUserId);
+
+  //     const storedReservations = localStorage.getItem(storedUserEmail);
+      
+  //     if (storedReservations) {
+  //       const parsedReservations = JSON.parse(storedReservations);
+  //       setReservations(parsedReservations);
+        
+  //       const originalTotal = parsedReservations.reduce(
+  //         (acc, curr) => acc + (curr.totalPrice || curr.price),
+  //         0
+  //       );
+        
+  //       setTotalAmount(originalTotal);
+        
+  //       if (discountData) {
+  //         const priceInfo = calculateDiscountedPrice(originalTotal, discountData);
+  //         setPriceDetails(priceInfo);
+  //       }
+  //     }
+  //     setLoading(false);
+  //   };
+
+  //   fetchData();
+  // }, [router]);
+
   useEffect(() => {
     const storedUserEmail = localStorage.getItem("userEmail");
     const storedUserId = localStorage.getItem("userId");
@@ -114,9 +149,8 @@ function StripeCheckout() {
       // Fetch loyalty discount details
       await fetchLoyaltyDiscountDetails(storedUserId);
 
-      // Fetch discounts and other data
+      // Fetch discounts
       const discountData = await fetchUserDiscounts(storedUserId);
-      await fetchPromotions();
 
       const storedReservations = localStorage.getItem(storedUserEmail);
       
@@ -132,11 +166,13 @@ function StripeCheckout() {
         setTotalAmount(originalTotal);
         
         if (discountData) {
-          const priceInfo = calculateDiscountedPrice(originalTotal, {
-            ...discountData,
-            promotion: selectedPromotion
-          });
+          const priceInfo = calculateDiscountedPrice(originalTotal, discountData);
           setPriceDetails(priceInfo);
+
+          // Set signup discount data
+          if (discountData.signupDiscount && !discountData.signupDiscount.isUsed) {
+            setSignupDiscountData(discountData.signupDiscount);
+          }
         }
       }
       setLoading(false);
@@ -145,36 +181,27 @@ function StripeCheckout() {
     fetchData();
   }, [router]);
 
-  // Update price when promotion or loyalty points change
+  // Update price when loyalty points change
   useEffect(() => {
     if (discounts) {
       let newDiscountData = { ...discounts };
       
-      if (useLoyaltyPoints) {
-        newDiscountData.loyaltyDiscount = {
-          ...newDiscountData.loyaltyDiscount,
-          isUsed: true
-        };
+      // If useLoyaltyPoints is false, mark loyalty discount as used
+      if (!useLoyaltyPoints && newDiscountData.loyaltyDiscount) {
+        newDiscountData.loyaltyDiscount.isUsed = true;
       } else if (newDiscountData.loyaltyDiscount) {
+        // If useLoyaltyPoints is true, mark it as not used
         newDiscountData.loyaltyDiscount.isUsed = false;
       }
 
       const newPriceDetails = calculateDiscountedPrice(
         totalAmount, 
-        {
-          ...newDiscountData, 
-          promotion: selectedPromotion
-        }
+        newDiscountData
       );
       
       setPriceDetails(newPriceDetails);
     }
-  }, [useLoyaltyPoints, totalAmount, discounts, selectedPromotion]);
-
-  // Handle promotion selection
-  const handlePromotionSelect = (promotion) => {
-    setSelectedPromotion(promotion === selectedPromotion ? null : promotion);
-  };
+  }, [useLoyaltyPoints, totalAmount, discounts]);
 
   // Handle loyalty points toggle
   const handleLoyaltyPointsToggle = async () => {
@@ -188,7 +215,7 @@ function StripeCheckout() {
         },
         body: JSON.stringify({
           userId,
-          useDiscount: newUseLoyaltyPoints
+          useDiscount: !newUseLoyaltyPoints // Invert the logic here
         })
       });
 
@@ -196,6 +223,7 @@ function StripeCheckout() {
         throw new Error('Failed to update loyalty discount preference');
       }
 
+      // Update local state
       setUseLoyaltyPoints(newUseLoyaltyPoints);
     } catch (error) {
       console.error('Error toggling loyalty discount:', error);
@@ -262,7 +290,7 @@ function StripeCheckout() {
         priceDetails.appliedDiscounts
       );
 
-      // Payment successful, process reservations
+      // Process reservations
       const requestData = {
         status: "confirmed",
         userId: parseInt(userId),
@@ -281,8 +309,7 @@ function StripeCheckout() {
           quantity: item.quantity || 1,
           specificServiceId: item.specificService ? item.specificService.id : null
         })),
-        appliedDiscounts: priceDetails.appliedDiscounts,
-        appliedPromotionId: selectedPromotion ? selectedPromotion.id : null
+        appliedDiscounts: priceDetails.appliedDiscounts
       };
 
       // Submit reservation to your backend
@@ -298,8 +325,26 @@ function StripeCheckout() {
         throw new Error("Failed to process reservation");
       }
 
-      // Clear local storage and redirect
-      localStorage.removeItem(userEmail);
+      // UPDATED: Clear specific reservations from localStorage
+      const storedReservations = JSON.parse(localStorage.getItem(userEmail) || '[]');
+      
+      // Filter out the reservations that were just processed
+      const remainingReservations = storedReservations.filter(storedReservation => 
+        !reservations.some(processedReservation => 
+          processedReservation.serviceId === storedReservation.serviceId &&
+          processedReservation.startDate === storedReservation.startDate
+        )
+      );
+
+      // Update localStorage with remaining reservations
+      if (remainingReservations.length > 0) {
+        localStorage.setItem(userEmail, JSON.stringify(remainingReservations));
+      } else {
+        // If no reservations remain, remove the item completely
+        localStorage.removeItem(userEmail);
+      }
+
+      // Redirect to reservations page
       router.push("/reservations");
     } catch (error) {
       console.error("Payment processing error:", error);
@@ -308,8 +353,6 @@ function StripeCheckout() {
       setProcessing(false);
     }
   };
-
-
 
     // Loading state
     if (loading) {
@@ -334,38 +377,30 @@ function StripeCheckout() {
       );
     }
 
-    
+    const renderSignupDiscountSection = () => {
+    if (!signupDiscountData) return null;
+
+    return (
+      <div className="mt-4 pt-4 border-t">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="font-medium">Signup Discount</h3>
+            <p className="text-sm text-gray-500">
+              {signupDiscountData.discountType === 'PERCENTAGE' 
+                ? `${signupDiscountData.discount}% off your first purchase` 
+                : `QAR ${signupDiscountData.discount} off your first purchase`}
+            </p>
+          </div>
+          <span className="text-green-600 font-medium">
+            Applied
+          </span>
+        </div>
+      </div>
+    );
+  };
+  
+
     const renderLoyaltyDiscountSection = () => {
-
-      const handleLoyaltyPointsToggle = async () => {
-        const newUseLoyaltyPoints = !useLoyaltyPoints;
-        
-        try {
-          // Call an API to update the loyalty discount usage preference
-          const response = await fetch('/api/loyalty-discount/toggle', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId,
-              useDiscount: newUseLoyaltyPoints
-            })
-          });
-      
-          if (!response.ok) {
-            throw new Error('Failed to update loyalty discount preference');
-          }
-      
-          // Update the local state
-          setUseLoyaltyPoints(newUseLoyaltyPoints);
-        } catch (error) {
-          console.error('Error toggling loyalty discount:', error);
-          // Optionally show an error message to the user
-        }
-      };
-
-
       const { currentDiscount, completedReservations, nextTier } = loyaltyDiscountData;
     
       if (!currentDiscount) {
@@ -421,7 +456,6 @@ function StripeCheckout() {
       );
     };
 
-
     // Main checkout render
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -470,33 +504,8 @@ function StripeCheckout() {
                       <span>QAR {priceDetails.finalPrice.toFixed(2)}</span>
                     </div>
                   </div>
-                  
-                  {/* Available promotions */}
-                  {promotions && promotions.length > 0 && (
-                    <div className="mt-4 pt-4 border-t">
-                      <h3 className="font-medium mb-2">Available Promotions</h3>
-                      {promotions.map((promotion) => (
-                        <div key={promotion.id} className="flex items-center mb-2">
-                          <input
-                            type="radio"
-                            id={`promo-${promotion.id}`}
-                            name="promotion"
-                            checked={selectedPromotion && selectedPromotion.id === promotion.id}
-                            onChange={() => handlePromotionSelect(promotion)}
-                            className="mr-2"
-                          />
-                          <label htmlFor={`promo-${promotion.id}`} className="text-sm">
-                            {promotion.title} - {promotion.discountType === 'PERCENTAGE' ? `${promotion.discount}%` : `QAR ${promotion.discount}`} off
-                            {promotion.description && <span className="block text-xs text-gray-500">{promotion.description}</span>}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                {renderLoyaltyDiscountSection()}
-
-                
+                  {renderSignupDiscountSection()}
+                  {renderLoyaltyDiscountSection()}
                 </div>
               </div>
 

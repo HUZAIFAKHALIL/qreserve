@@ -1,3 +1,4 @@
+// src\app\api\loyalty-discount\route.js
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { getLoyaltyDiscountDetails } from '@/utils/loyaltyDiscountManager';

@@ -238,7 +238,7 @@ const SearchAndFilter = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
-    location: "",
+    location: "", 
     priceRange: [0, 1000],
     rating: "",
   });
@@ -246,6 +246,20 @@ const SearchAndFilter = () => {
   const [category, setCategory] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const filterRef = useRef(null);
+
+  const qatarCities = [
+    "Doha",
+    "Al Wakrah", 
+    "Al Khor", 
+    "Al Rayyan", 
+    "Umm Salal", 
+    "Al Daayen", 
+    "Lusail", 
+    "Mesaieed", 
+    "Dukhan", 
+    "Al Shamal", 
+    "Al Ruwais"
+  ];
 
   const handleSearch = () => {
     if (!searchQuery.trim()) {
@@ -300,9 +314,7 @@ const SearchAndFilter = () => {
     "hotel",
     "gym",
     "playground",
-    "location"
   ];
-
   return (
     <div className="relative w-full max-w-2xl mx-auto" ref={filterRef}>
       {/* Search Bar */}
@@ -323,8 +335,27 @@ const SearchAndFilter = () => {
           className="absolute top-16 left-0 w-full bg-white shadow-lg p-4 rounded-lg z-10"
           tabIndex={-1}
         >
-          {/* Category Selection */}
+          {/* Location Filter */}
           <div className="mb-4">
+            <label className="block mb-2 font-medium">Location</label>
+            <select
+              name="location"
+              className="w-full p-2 border rounded-lg"
+              value={filters.location}
+              onChange={handleFilterChange}
+            >
+              <option value="">Select a city in Qatar</option>
+              {qatarCities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+          </div>
+
+
+          {/* Category Selection */}
+           <div className="mb-4">
             <label className="block mb-2 font-medium">Category</label>
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => (

@@ -21,14 +21,16 @@ export async function GET(request) {
       where: { sellerId: parseInt(sellerId) }
     });
 
-    // Categorize services into pending & approved
-    const pendingServices = services.filter(service => !service.isApproved);
-    const approvedServices = services.filter(service => service.isApproved);
+    
+    const pendingServices = services.filter(service => (!service.isApproved  && !service.isRejected));
+    const approvedServices = services.filter(service => (service.isApproved && !service.isRejected));
+    const rejectedServices = services.filter(service => (!service.isApproved && service.isRejected));
 
     return new Response(
       JSON.stringify({ 
         pending: pendingServices,
-        approved: approvedServices 
+        approved: approvedServices,
+        rejected: rejectedServices,
       }),
       {
         status: 200,

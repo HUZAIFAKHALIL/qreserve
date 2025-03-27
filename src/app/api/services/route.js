@@ -1,3 +1,4 @@
+// src\app\api\services\route.js
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -120,6 +121,7 @@ export async function POST(request) {
         location: service.location,
         rating: service.rating ?? null,
         isApproved: false, // Admin approval required
+        isRejected: false,
       },
     });
 

@@ -986,10 +986,12 @@ import Link from "next/link";
 import { useAuth } from "@/PrivateRoute/auth";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { Calendar, DollarSign, MapPin, User2, Briefcase, InboxIcon, Clock, CheckCircle, MessageSquare } from "lucide-react";
+import { Calendar, DollarSign, MapPin, User2, Briefcase, InboxIcon, Clock, CheckCircle, MessageSquare, XCircle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import AdminChatMonitoring from "./AdminChatMonitoring";
 import ImageSlider from "./ImageSlider";
+import GenerateReportButton from "./GenerateReportButton";
+import GenerateSellerReportButton from "./GenerateSellerReportButton";
 
 const MainPage = () => {
   const prefixURL = "/service";
@@ -1001,11 +1003,13 @@ const MainPage = () => {
   const [userType, setUserType] = useState(null);
   const [allServices, setServices] = useState({
     pending: [],
-    approved: []
+    approved: [],
+    rejected: []
   });
   const [sellerServices, setsellerServices] = useState({
     pending: [],
-    approved: []
+    approved: [],
+    rejected: []
   });
   const [activeTab, setActiveTab] = useState('services');
 
@@ -1030,7 +1034,7 @@ const MainPage = () => {
           const response = await fetch(`/api/services/seller/?sellerId=${userID}`);
           if (!response.ok) throw new Error("Failed to fetch seller services");
           const data = await response.json();
-          setsellerServices({ pending: data.pending, approved: data.approved });
+          setsellerServices({ pending: data.pending, approved: data.approved  , rejected : data.rejected});
         } catch (err) {
           setError(err.message);
         } finally {
@@ -1044,7 +1048,7 @@ const MainPage = () => {
           const response = await fetch(`/api/services/admin`);
           if (!response.ok) throw new Error("Failed to fetch all services");
           const data = await response.json();
-          setServices({ pending: data.pending, approved: data.approved });
+          setServices({ pending: data.pending, approved: data.approved , rejected: data.rejected });
         } catch (err) {
           setError(err.message);
         } finally {
@@ -1097,6 +1101,7 @@ const MainPage = () => {
               <div className="container mx-auto p-6">
                 <div className="flex items-center justify-between mb-8">
                   <h1 className="text-3xl font-bold text-black">Seller Dashboard</h1>
+                  {/* <GenerateSellerReportButton/> */}
                   <Link
                     href="/addService"
                     className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors"
@@ -1142,101 +1147,140 @@ const MainPage = () => {
                         link={`${prefixURL}Details?serviceID=${service.id}`}
                       />
                     ))}
-              </div>
+                    </div>
                   </div>
+
+                  <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <XCircle className="h-6 w-6 text-red-500" />
+                        <h2 className="text-xl font-bold text-black">Rejected Services</h2>
+                      </div>
+                      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {sellerServices?.rejected?.map((service) => (
+                          <ServiceCard
+                            key={service.id} 
+                            title={service.name}
+                            imageSrc={`/images/${service.type}.jpg`}
+                            description={service.description}
+                            link={`${prefixURL}Details?serviceID=${service.id}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
                 </div>
               </div>
             </div>
           );
         }
 
-  if (userType === "ADMIN") {
-    return (
-      <div className="bg-white min-h-screen">
-        <div className="container mx-auto p-6">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-black">ADMIN Dashboard</h1>
-          </div>
-
-          {/* Admin Tabs */}
-          <div className="mb-6 border-b">
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setActiveTab('services')}
-                className={`py-3 px-4 border-b-2 font-medium ${
-                  activeTab === 'services' 
-                    ? 'border-black text-black' 
-                    : 'border-transparent text-gray-500 hover:text-black hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Briefcase className="h-5 w-5" />
-                  <span>Services</span>
+        if (userType === "ADMIN") {
+          return (
+            <div className="bg-white min-h-screen">
+              <div className="container mx-auto p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <h1 className="text-3xl font-bold text-black">ADMIN Dashboard</h1>
+                  <GenerateReportButton/>
                 </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('chat')}
-                className={`py-3 px-4 border-b-2 font-medium ${
-                  activeTab === 'chat' 
-                    ? 'border-black text-black' 
-                    : 'border-transparent text-gray-500 hover:text-black hover:border-gray-300'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  <span>Support Chats</span>
+      
+                {/* Admin Tabs */}
+                <div className="mb-6 border-b">
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => setActiveTab('services')}
+                      className={`py-3 px-4 border-b-2 font-medium ${
+                        activeTab === 'services' 
+                          ? 'border-black text-black' 
+                          : 'border-transparent text-gray-500 hover:text-black hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-5 w-5" />
+                        <span>Services</span>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('chat')}
+                      className={`py-3 px-4 border-b-2 font-medium ${
+                        activeTab === 'chat' 
+                          ? 'border-black text-black' 
+                          : 'border-transparent text-gray-500 hover:text-black hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-5 w-5" />
+                        <span>Support Chats</span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
-              </button>
-            </div>
-          </div>
-
-          {activeTab === 'services' ? (
-            <div className="space-y-8">
-              {/* Pending Services */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="h-6 w-6 text-yellow-500" />
-                  <h2 className="text-xl font-bold text-black">Pending Services</h2>
-                </div>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {allServices?.pending?.map((service) => (
-                    <ServiceCard
-                      key={service.id} 
-                      title={service.name}
-                      imageSrc={`/images/${service.type}.jpg`}
-                      description={service.description}
-                      link={`${prefixURL}Details?serviceID=${service.id}`}
-                    />
-                  ))}
-                </div>
+      
+                {activeTab === 'services' ? (
+                  <div className="space-y-8">
+                    {/* Pending Services */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Clock className="h-6 w-6 text-yellow-500" />
+                        <h2 className="text-xl font-bold text-black">Pending Services</h2>
+                      </div>
+                      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {allServices?.pending?.map((service) => (
+                          <ServiceCard
+                            key={service.id} 
+                            title={service.name}
+                            imageSrc={`/images/${service.type}.jpg`}
+                            description={service.description}
+                            link={`${prefixURL}Details?serviceID=${service.id}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+      
+                    {/* Approved Services */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <CheckCircle className="h-6 w-6 text-green-500" />
+                        <h2 className="text-xl font-bold text-black">Approved Services</h2>
+                      </div>
+                      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {allServices?.approved?.map((service) => (
+                          <ServiceCard
+                            key={service.id} 
+                            title={service.name}
+                            imageSrc={`/images/${service.type}.jpg`}
+                            description={service.description}
+                            link={`${prefixURL}Details?serviceID=${service.id}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+      
+                    {/* Rejected Services */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <XCircle className="h-6 w-6 text-red-500" />
+                        <h2 className="text-xl font-bold text-black">Rejected Services</h2>
+                      </div>
+                      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {allServices?.rejected?.map((service) => (
+                          <ServiceCard
+                            key={service.id} 
+                            title={service.name}
+                            imageSrc={`/images/${service.type}.jpg`}
+                            description={service.description}
+                            link={`${prefixURL}Details?serviceID=${service.id}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <AdminChatMonitoring />
+                )}
               </div>
-
-              {/* Approved Services */}
-              <div>
-                <div className="flex items-center gap-2 mb-4">
-                  <CheckCircle className="h-6 w-6 text-green-500" />
-                  <h2 className="text-xl font-bold text-black">Approved Services</h2>
-                </div>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {allServices?.approved?.map((service) => (
-                    <ServiceCard
-                      key={service.id} 
-                      title={service.name}
-                      imageSrc={`/images/${service.type}.jpg`}
-                      description={service.description}
-                      link={`${prefixURL}Details?serviceID=${service.id}`}
-                    />
-                  ))}
-                </div>
-              </div>
             </div>
-          ) : (
-            <AdminChatMonitoring />
-          )}
-        </div>
-      </div>
-    );
-  }
+          );
+        }
 
   return (
     <div className="bg-white min-h-screen">
@@ -1249,7 +1293,7 @@ const MainPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4 order-2 lg:order-1">
             <div className="sticky top-6 h-[calc(100vh-8rem)] overflow-y-auto">
-              <h2 className="text-xl font-bold text-black mb-4">Partner Requests</h2>
+              <h2 className="text-xl font-bold text-black mb-4">Partner For Company</h2>
               <RequestPartner
                 requests={reservations}
                 userID={userID}

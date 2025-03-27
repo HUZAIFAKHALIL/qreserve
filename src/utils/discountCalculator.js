@@ -36,21 +36,6 @@ export function calculateDiscountedPrice(originalPrice, discounts) {
     });
   }
 
-  // Apply promotion if available
-  if (discounts.promotion) {
-    const discount = discounts.promotion;
-    const discountAmount = discount.discountType === 'PERCENTAGE'
-      ? originalPrice * (discount.discount / 100)
-      : discount.discount;
-
-    finalPrice -= discountAmount;
-    appliedDiscounts.push({
-      type: 'PROMOTION',
-      amount: discountAmount,
-      description: discount.title
-    });
-  }
-
   // Ensure price doesn't go below zero
   finalPrice = Math.max(0, finalPrice);
 

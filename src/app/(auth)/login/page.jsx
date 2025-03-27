@@ -3,6 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import PasswordField from "@/components/PasswordField";
 import { useRouter } from "next/navigation";
+import { Apple, Facebook } from "lucide-react";
+import Image from "next/image";
 
 export default function Login() {
   const [identifier, setIdentifier] = useState("");
@@ -48,22 +50,6 @@ export default function Login() {
         localStorage.setItem("userId", data.userId);
         localStorage.setItem("userRole", data.userRole);
         
-        // Store discount information in localStorage for use throughout the app
-        if (data.discountInfo) {
-          localStorage.setItem("discountInfo", JSON.stringify(data.discountInfo));
-        }
-        
-        // Display signup discount notification if available
-        if (data.discountInfo?.hasSignupDiscount) {
-          const discountAmount = data.discountInfo.signupDiscountAmount;
-          const discountType = data.discountInfo.signupDiscountType;
-          const discountText = discountType === "PERCENTAGE" 
-            ? `${discountAmount}%` 
-            : `$${discountAmount}`;
-          
-          alert(`Welcome! You have a signup discount of ${discountText} available on your first reservation!`);
-        }
-        
         window.location.href = "/";
       } else {
         setError(data.error || "Login failed");
@@ -100,80 +86,99 @@ export default function Login() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-white">
-      <div className="w-full max-w-sm p-8 bg-white shadow-lg rounded-lg">
-        <h2 className="text-3xl font-semibold text-center mb-6">Login</h2>
-        
-        {/* Signup Discount Promotion Banner */}
-        <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
-          <p className="text-blue-800 font-medium">New users get a special discount on their first reservation!</p>
-        </div>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label
-              htmlFor="identifier"
-              className="block text-lg font-medium mb-2"
-            >
-              {loginWithEmail ? "Email" : "Phone Number"}
-            </label>
-            <input
-              type={loginWithEmail ? "email" : "tel"}
-              id="identifier"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder={
-                loginWithEmail ? "Enter your email" : "Enter your phone number"
-              }
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-              required
-              autoFocus
-            />
+    <div className="flex min-h-screen">
+      {/* Left Panel - Login Form */}
+      <div className="w-full lg:w-[45%] p-8 flex items-center justify-center bg-white">
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
+            <p className="text-gray-600">Please enter your details to sign in</p>
           </div>
-          {error && <p>{error}</p>}
 
-          <PasswordField password={password} setPassword={setPassword} />
-
-          {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-
-          <button
-            type="submit"
-            className="w-full p-3 bg-black text-white rounded-lg hover:bg-gray-800 focus:outline-none"
-            disabled={loading}
-          >
-            {loading ? "Logging In..." : "Login"}
-          </button>
-
-          <p className="mt-4 text-center text-sm">
-            <button
-              className="underline text-black hover:text-blue-700 cursor-pointer bg-white"
-              onClick={handleForgotPassword}
-            >
-              Forgot Password
+          <div className="flex gap-3 mb-8">
+            <button className="flex-1 py-3 px-4 border border-gray-200 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors">
+              <Apple className="w-5 h-5" />
             </button>
-          </p>
+            <button className="flex-1 py-3 px-4 border border-gray-200 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors">
+              <Image src="https://img.icons8.com/color/48/000000/google-logo.png" width={20} height={20} alt="Google" />
+            </button>
+            <button className="flex-1 py-3 px-4 border border-gray-200 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors">
+              <Facebook className="w-5 h-5" />
+            </button>
+          </div>
 
-          <p className="mt-4 text-center">
-            Don{"'"}t have an account?{" "}
-            <Link
-              href="/signup"
-              className="text-black font-medium hover:text-blue-700"
+          <div className="flex items-center gap-4 mb-8">
+            <div className="h-[1px] flex-1 bg-gray-200"></div>
+            <span className="text-gray-500">or</span>
+            <div className="h-[1px] flex-1 bg-gray-200"></div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="identifier" className="block text-sm font-medium mb-2 text-gray-700">
+                {loginWithEmail ? "Email" : "Phone Number"}
+              </label>
+              <input
+                type={loginWithEmail ? "email" : "tel"}
+                id="identifier"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder={loginWithEmail ? "Enter your email" : "Enter your phone number"}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <PasswordField password={password} setPassword={setPassword} />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setLoginWithEmail(!loginWithEmail)}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                {loginWithEmail ? "Use phone number" : "Use email"}
+              </button>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+            {message && <p className="text-green-600 text-sm text-center">{message}</p>}
+
+            <button
+              type="submit"
+              className="w-full py-3 px-4 bg-[#2B4C3F] text-white rounded-xl hover:bg-[#1e3b2f] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#2B4C3F] disabled:opacity-50"
+              disabled={loading}
             >
-              Sign Up
+              {loading ? "Signing in..." : "Sign in"}
+            </button>
+          </form>
+
+          <p className="mt-8 text-center text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link href="/signup" className="font-medium text-[#2B4C3F] hover:text-[#1e3b2f]">
+              Sign up
             </Link>
           </p>
+        </div>
+      </div>
 
-          <div className="text-center mt-4">
-            <button
-              type="button"
-              onClick={() => setLoginWithEmail(!loginWithEmail)}
-              className="text-blue-700 hover:underline"
-            >
-              {loginWithEmail ? "Login with Phone Number" : "Login with Email"}
-            </button>
-            {message && <p className="mt-2 text-green-600">{message}</p>}
-          </div>
-        </form>
+      {/* Right Panel - Image */}
+      <div className="hidden lg:block lg:w-[55%] relative">
+        <div className="absolute inset-0 bg-[#2B4C3F]/10"></div>
+        <div className="h-full w-full object-cover" style={{
+          backgroundImage: `url('https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}></div>
       </div>
     </div>
   );

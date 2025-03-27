@@ -91,6 +91,7 @@ model Service {
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   isApproved         Boolean             @default(false)
+  isRejected         Boolean             @default(false)
   sellerId           Int
   activityServices   ActivityService[]
   carServices        CarService[]

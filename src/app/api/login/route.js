@@ -18,14 +18,10 @@ export async function POST(req) {
   try {
     console.log("Data received at back:", identifier, password);
 
-    // Find user by email or phone with related discount information
+    // Find user by email or phone
     const user = await prisma.user.findFirst({
       where: {
         OR: [{ email: identifier }, { phone: identifier }],
-      },
-      include: {
-        signupDiscount: true,
-        loyaltyDiscount: true,
       },
     });
 
@@ -47,18 +43,7 @@ export async function POST(req) {
       expiresIn: "1h",
     });
 
-    // Format discount information for the frontend
-    const discountInfo = {
-      hasSignupDiscount: user.signupDiscount && !user.signupDiscount.isUsed,
-      signupDiscountAmount: user.signupDiscount ? user.signupDiscount.discount : 0,
-      signupDiscountType: user.signupDiscount ? user.signupDiscount.discountType : null,
-      hasLoyaltyDiscount: !!user.loyaltyDiscount,
-      loyaltyDiscountAmount: user.loyaltyDiscount ? user.loyaltyDiscount.discount : 0,
-      loyaltyDiscountType: user.loyaltyDiscount ? user.loyaltyDiscount.discountType : null,
-      loyaltyThreshold: user.loyaltyDiscount ? user.loyaltyDiscount.threshold : 0
-    };
-
-    // Send response with token and discount information
+    // Send response with token and user information
     return new Response(
       JSON.stringify({
         message: "Login successful",
@@ -66,8 +51,7 @@ export async function POST(req) {
         userEmail: user.email,
         userId: user.id,
         userName: user.name,
-        userRole: user.role || 'BUYER',
-        discountInfo
+        userRole: user.role || 'BUYER'
       }),
       { status: 200 }
     );
